@@ -1,0 +1,107 @@
+#+TITLE: Building a web application
+#+AUTHOR: Ian Galvin Fernandes
+#+DATE: [2016-05-17 Tue]
+
+
+* Introduction
+  
+  Through the course of this project, we need to build a web
+  application, ground up to the cloud.  We need to go through an
+  end-to-end requirements.
+
+  [[./x.jpg]]
+
+* Goal
+  
+  Gathering the requirements
+
+** Requirements gathering
+   We need to document the requirements of the user/customer. These
+   need to be established as early as possible, so as to ensure that
+   the end application is what the customer wants.
+   
+* Components of a web application
+
+** Front-end component
+   We need to build the front-end of the application, which will be
+   the interface for the user to interact with the application. The
+   front-end is essentially the interface between the user and the
+   server.
+   
+** Server-side component
+   The server-side component will service the requests from the
+   front-end user component. This component ensures that whatever
+   data the front-end component requests will be serviced accurately
+   and as soon as possible, from the database.
+
+* Relational data model
+
+** What we've learnt so far
+   So far, we've learnt to model the entities in a system into
+   relations, so that we can manipulate data in the system.
+
+   We've learnt about isolating entities of a system, in order to
+   depict the states of the system.
+
+   We've learnt about representing functions in terms of the
+   cardinalities.
+
+   We've learnt about cardinalities of entities, and how to use these
+   cardinalities in order to model relations.
+
+   Cardinalities:
+
+   #+BEGIN_EXAMPLE
+   
+   
+   B*-----> 0 or more
+
+   B+-----> atleast 1
+
+   B!-----> exactly 1
+
+   B?-----> at most 1
+
+   #+END_EXAMPLE
+
+   We've also learnt about system states, and how to use cardinalities
+   to model these system states in order to depict the complete
+   working state of a system.
+
+   Using cardinalities enables us to accurately depict the system
+   states, either relationally or graphically.
+   
+   We've also learnt about relational intergrity of the relations in
+   a system.
+
+
+** Operations
+|------------------------------------+----------------------+-----------------------+-----------------------+----------------------|
+| Operation                          | Credentials          | Referential Integrity | Effect and/OR outputs | Remarks              |
+| Signature                          |                      |                       |                       |                      |
+|------------------------------------+----------------------+-----------------------+-----------------------+----------------------|
+| getRole(u:User, s:Session)         | s.user.role=admin OR | s:sessionSet          | admin/user            |                      |
+|                                    | s.user.role=user     | u:userSet             |                       |                      |
+|------------------------------------+----------------------+-----------------------+-----------------------+----------------------|
+| changeRole(u:User)                 | s.user.role=admin    | u:userSet             | Success/Failure       |                      |
+|------------------------------------+----------------------+-----------------------+-----------------------+----------------------|
+| removeAdmin(u:User)                | s.user.role=admin    | u:adminSet            | Success/Failure       |                      |
+|------------------------------------+----------------------+-----------------------+-----------------------+----------------------|
+| listOnlineUsers(u:User, s:Session) | s.user.role=admin    | u:userSet             |                       |                      |
+|                                    |                      | s:sessionSet          |                       |                      |
+|------------------------------------+----------------------+-----------------------+-----------------------+----------------------|
+| getUserByEmail(e:Email, s:Session) |                      | s:sessionSet          | u:User                | Return user by email |
+|------------------------------------+----------------------+-----------------------+-----------------------+----------------------|
+|                                    |                      |                       |                       |                      |
+  
+
+
+
+
+* List of technologies
+  - [[https://www.python.org][Python]] :: Python will be the main language in the implementation
+              of this project.  We will be using version 2.7.  (Not
+              3.x).
+
+  - [[https://flask.pocoo.org/][Flask]] :: Flask is the framework for web development in Python.  
+             We will use version 0.10.1.

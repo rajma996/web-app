@@ -1,0 +1,15 @@
+*~
+.\#*
+*.sw[p|o]
+\#*\#
+.\#*\#
+logs/
+build/
+elisp/
+org-templates/
+style/
+src/org-templates
+src/style
+sitemap*
+lint_output
+venv/

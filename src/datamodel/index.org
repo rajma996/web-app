@@ -1,0 +1,168 @@
+#+TITLE: Data Model for the Mini Version User Directory Application
+#+AUTHOR: VLEAD
+#+DATE: [2016-05-11 Wed]
+#+PROPERTY: results output
+#+PROPERTY: exports code
+#+SETUPFILE: ../org-templates/level-1.org
+#+options: ^:nil
+#+LATEX: Literal LaTeX code for export
+* Notation
+** Sets, cardinality and relations
+
+If =A= is a set, then
+    1. =A!= denotes exactly one element of =A=.
+    2. =A?= denotes at most one element of =A=.
+    3. =A+= denotes  one or more elements of =A=
+    4. =A*=  denotes at zero or more elements of =A=.  Often
+       abbreviated as =A=.
+
+    5. =A > B= denotes a relation /from/ =A= /to/ =B=.
+
+
+** Relations and their cardinality type
+
+A relation =r:A > B= could relate each element of =A= to
+zero, one or more elements of =B=.
+
+|--------------------------------+-----------+---+---|
+| Cardinality of B               | Notation  |   |   |
+|--------------------------------+-----------+---+---|
+| at least zero elements of =B=. | r: A > B  |   |   |
+|--------------------------------+-----------+---+---|
+| at most one element of =B=     | r: A > B? |   |   |
+|--------------------------------+-----------+---+---|
+| at least one element of =B=    | r: A > B+ |   |   |
+|--------------------------------+-----------+---+---|
+| exactly one element of =B=     | r: A > B! |   |   |
+|--------------------------------+-----------+---+---|
+   
+** Example of Entity Relationship notation
+    
+#+begin_example
+ [email, user] : User? > Email!
+#+end_example
+
+Encodes the following items of information:
+
+ - =email= is a relation /from/ the set =User= /to/ the set
+   =Email=.
+
+ - =User= is called the /domain/ of the relation =email=.
+
+ - =Email= is called the /codomain/ of the relation =email=.
+
+ - The relation =email= relates each element of =User= to
+   /exactly one/ element of =Email=.  This is written as 
+
+ #+begin_example
+ email: User > Email!
+ #+end_example
+
+ - =user= is a relation /from/ the set =Email= /to/ the set
+   =User=.
+
+ - =Email= is called the /domain/ of the relation =user=.
+
+ - =User= is called the /codomain/ of the relation =user=.
+
+ - The relation =user= relates each element of =Email= to
+   /at most one/ element of =User=.  This is written as 
+
+ #+begin_example
+ user: Email > User?
+ #+end_example
+
+
+* Abstract Entity Types
+#+BEGIN_SRC spec :tangle spec.txt
+User
+#+END_SRC
+
+* Relations and cardinality constraints over entity types 
+For each relation, we define its inverse next to it.
+#+BEGIN_SRC spec :tangle spec.txt
+[email, user]  :  User?    > Email!
+#+END_SRC
+
+** Keys
+
+An entity =K= is called a /key for/ an entity =A= if there
+is a relation =r: A? > K!=.
+
+|---------+-------+---+---+---|
+| Entity  | Key   |   |   |   |
+|---------+-------+---+---+---|
+| User    | Email |   |   |   |
+|---------+-------+---+---+---|
+
+
+* Disjoint Unions
+#+BEGIN_SRC spec :tangle spec.txt
+Role = user + admin
+#+END_SRC
+
+* System state
+  The system's state is captured by a set of /state
+  variables/.  
+** Primary Entity sets
+
+For the purpose of /the application/, we maintain two primary
+state variables.  
+
+ #+BEGIN_SRC spec
+ user-set    : set[User]    ; set of users in the system
+ #+END_SRC
+
+and five relations
+
+ #+BEGIN_SRC spec
+ email:      User > Email!
+ #+END_SRC
+
+*** Applying relations to sets
+#+begin_example
+
+
+1.role = admin
+2.role = user
+5.role = user
+{1,2,5}.role = {admin, user,user} = {admin, user}
+
+{1,2,5}.succ = {2,3,6}
+{1,2,6}.factors = {{1}, {1,2}, {1,2,3,6}}
+{1,2,6}.factors.union = {{1}, {1,2}, {1,2,3,6}}.union = {1,2,3,6}
+#+end_example
+
+** Derived Entity sets
+ #+BEGIN_SRC spec :tangle spec.txt
+ email-set   : set[Email]   = user-set.email        ; set of emails in the system
+ #+END_SRC
+
+** Referential Integrity Constraints over entity-sets
+These specifications also capture referential integrity.
+#+BEGIN_SRC spec :tangle spec.txt
+[email, user]    :  user-set!    > email-set!
+#+END_SRC
+
+* Operations 
+CRUD operations.  
+
+Each operation is performed on an entity instance or an
+entity-set.   The operation may take additional parameters.
+It also takes as a  parameter of the credentials of the
+actor performing the operation.
+
+ - C  create a user      
+ - R  read from a user   
+ - U  update a user      
+ - D  delete a user      
+
+** Actor
+Operations are performed by Actors.  Our application has two
+types of actors:  =system= and =session=. 
+
+|----------------------------------------+------------------------+----------------+-------------------|
+| Operation                              | Actor                  | Ref.           | Result            |
+|                                        | Credentials            | Integrity      |                   |
+|----------------------------------------+------------------------+----------------+-------------------|
+
