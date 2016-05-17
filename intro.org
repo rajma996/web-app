@@ -34,6 +34,46 @@
    data the front-end component requests will be serviced accurately
    and as soon as possible, from the database.
 
+* Relational model
+
+** What we've learnt so far
+   So far, we've learnt to model the entities in a system into
+   relations, so that we can manipulate data in the system.
+
+   We've learnt about isolating entities of a system, in order to
+   depict the states of the system.
+
+   We've learnt about representing functions in terms of the
+   cardinalities.
+
+   We've learnt about cardinalities of entities, and how to use these
+   cardinalities in order to model relations.
+
+   Cardinalities:
+
+   #+BEGIN_EXAMPLE
+   
+   
+   B*-----> 0 or more
+
+   B+-----> atleast 1
+
+   B!-----> exactly 1
+
+   B?-----> at most 1
+
+   #+END_EXAMPLE
+
+   We've also learnt about system states, and how to use cardinalities
+   to model these system states in order to depict the complete
+   working state of a system.
+
+   Using cardinalities enables us to accurately depict the system
+   states, either relationally or graphically.
+   
+   We've also learnt about relational intergrity of the relations in
+   a system.
+
 * List of technologies
   - [[https://www.python.org][Python]] :: Python will be the main language in the implementation
               of this project.  We will be using version 2.7.  (Not
