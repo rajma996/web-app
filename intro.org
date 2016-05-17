@@ -74,6 +74,23 @@
    We've also learnt about relational intergrity of the relations in
    a system.
 
+
+** Operations
+|----------------------------+----------------------+-----------------------+-----------------------+---------|
+| Operation                  | Credentials          | Referential Integrity | Effect and/OR outputs | Remarks |
+| Signature                  |                      |                       |                       |         |
+|----------------------------+----------------------+-----------------------+-----------------------+---------|
+| getRole(u:User, s:Session) | s.user.role=admin OR | s:sessionSet          | admin/user            |         |
+|                            | s.user.role=user     | u:userSet             |                       |         |
+|----------------------------+----------------------+-----------------------+-----------------------+---------|
+| changeRole(u:User)         | s.user.role=admin    | u:userSet             | Success/Failure       |         |
+|----------------------------+----------------------+-----------------------+-----------------------+---------|
+|                            |                      |                       |                       |         |
+|                            |                      |                       |                       |         |
+
+
+
+
 * List of technologies
   - [[https://www.python.org][Python]] :: Python will be the main language in the implementation
               of this project.  We will be using version 2.7.  (Not
