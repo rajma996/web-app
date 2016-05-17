@@ -34,7 +34,7 @@
    data the front-end component requests will be serviced accurately
    and as soon as possible, from the database.
 
-* Relational model
+* Relational data model
 
 ** What we've learnt so far
    So far, we've learnt to model the entities in a system into
