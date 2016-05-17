@@ -1,0 +1,43 @@
+#+TITLE: Building a web application
+#+AUTHOR: Ian Galvin Fernandes
+#+DATE: [2016-05-17 Tue]
+
+
+* Introduction
+  
+  Through the course of this project, we need to build a web
+  application, ground up to the cloud.  We need to go through an
+  end-to-end requirements.
+
+  [[./x.jpg]]
+
+* Goal
+  
+  Gathering the requirements
+
+** Requirements gathering
+   We need to document the requirements of the user/customer. These
+   need to be established as early as possible, so as to ensure that
+   the end application is what the customer wants.
+   
+* Components of a web application
+
+** Front-end component
+   We need to build the front-end of the application, which will be
+   the interface for the user to interact with the application. The
+   front-end is essentially the interface between the user and the
+   server.
+   
+** Server-side component
+   The server-side component will service the requests from the
+   front-end user component. This component ensures that whatever
+   data the front-end component requests will be serviced accurately
+   and as soon as possible, from the database.
+
+* List of technologies
+  - [[https://www.python.org][Python]] :: Python will be the main language in the implementation
+              of this project.  We will be using version 2.7.  (Not
+              3.x).
+
+  - [[https://flask.pocoo.org/][Flask]] :: Flask is the framework for web development in Python.  
+             We will use version 0.10.1.
