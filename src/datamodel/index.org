@@ -1,6 +1,6 @@
 #+TITLE: Data Model for the Mini Version User Directory Application
-#+AUTHOR: Ian Galvin Fernandes
-#+DATE: [2016-05-17 Tue]
+#+AUTHOR: VLEAD
+#+DATE: [2016-05-11 Wed]
 #+PROPERTY: results output
 #+PROPERTY: exports code
 #+SETUPFILE: ../org-templates/level-1.org
@@ -76,10 +76,6 @@ Encodes the following items of information:
 * Abstract Entity Types
 #+BEGIN_SRC spec :tangle spec.txt
 User
-Role
-Session
-Name
-Email
 #+END_SRC
 
 * Relations and cardinality constraints over entity types 
@@ -114,17 +110,13 @@ For the purpose of /the application/, we maintain two primary
 state variables.  
 
  #+BEGIN_SRC spec
- user-set : set[User] ; set of users in the system 
- session-set : set[Sessions] ; set of currently running sessions in the system #+END_SRC
+ user-set    : set[User]    ; set of users in the system
  #+END_SRC
+
 and five relations
 
-#+BEGIN_SRC spec
+ #+BEGIN_SRC spec
  email:      User > Email!
- name:       User > Name!
- role:       User > Role!
- user:       Session > User!
- session:    User > Session*
  #+END_SRC
 
 *** Applying relations to sets
@@ -144,18 +136,12 @@ and five relations
 ** Derived Entity sets
  #+BEGIN_SRC spec :tangle spec.txt
  email-set   : set[Email]   = user-set.email        ; set of emails in the system
- name-set    : set[Name]    = user-set.name         ; set of names of users
- role-set    : set[Role]    = user-set.role         ; set of roles
- 
  #+END_SRC
 
 ** Referential Integrity Constraints over entity-sets
 These specifications also capture referential integrity.
 #+BEGIN_SRC spec :tangle spec.txt
 [email, user]    :  user-set!    > email-set!
-[session, user]  :  user-set!    > session-set*
-[user, role]     :  role!        > user+
-[user, name]     :  name!        > user*
 #+END_SRC
 
 * Operations 
@@ -175,46 +161,8 @@ actor performing the operation.
 Operations are performed by Actors.  Our application has two
 types of actors:  =system= and =session=. 
 
-|-----------------------------------------+----------------------+-----------------------+--------------------------------------------|
-| Operation                               | Actor Credentials    | Referential Integrity | Result                                     |
-|                                         |                      |                       |                                            |
-|-----------------------------------------+----------------------+-----------------------+--------------------------------------------|
-| getRole(u:User, s:Session)              | s.user.role=admin OR | s:sessionSet          | Returns role of user                       |
-|                                         | s.user.role=user     | u:userSet             |                                            |
-|-----------------------------------------+----------------------+-----------------------+--------------------------------------------|
-| changeRole(u:User)                      | s.user.role=admin    | u:userSet             | Success/Failure                            |
-|-----------------------------------------+----------------------+-----------------------+--------------------------------------------|
-| removeAdmin(u:User)                     | s.user.role=admin    | u:adminSet            | Success/Failure                            |
-|-----------------------------------------+----------------------+-----------------------+--------------------------------------------|
-| listOnlineUsers(u:User, s:Session)      | s.user.role=admin    | u:userSet             | Lists all online users                     |
-|                                         |                      | s:sessionSet          |                                            |
-|-----------------------------------------+----------------------+-----------------------+--------------------------------------------|
-| getUserByEmail(e:Email, s:Session)      |                      | s:sessionSet          | Returns a specific user, if email is valid |
-|-----------------------------------------+----------------------+-----------------------+--------------------------------------------|
-| viewUser(u:User, s:Session, e:Email)    |                      | s:sessionSet          | Allows to view a particular user, based    |
-|                                         |                      | u:userSet             | on email id                                |
-|-----------------------------------------+----------------------+-----------------------+--------------------------------------------|
-| removeUser(u:User, s:Session)           | s.user.role=admin    | u:userSet             | Success/Failure                            |
-|                                         |                      | s:sessionSet          |                                            |
-|-----------------------------------------+----------------------+-----------------------+--------------------------------------------|
-| createUser(u:User, s:Session, e:Email)  | s.user.role=admin    | u:userSet             | Success/Failure                            |
-|                                         |                      | s:sessionSet          |                                            |
-|                                         |                      | e:emailSet            |                                            |
-|-----------------------------------------+----------------------+-----------------------+--------------------------------------------|
-| modifyUser(u:User, s:Session)           | s.user.role=admin    | u:userSet             | Success/Failure                            |
-|                                         |                      | s:sessionSet          |                                            |
-|-----------------------------------------+----------------------+-----------------------+--------------------------------------------|
-| getUserName(u:User, s:Session, e:Email) | s.user.role=admin    | u:userSet             | Returns user name, upon entering a valid   |
-|                                         |                      | s:sessionSet          | email id                                   |
-|                                         |                      | e:emailSet            |                                            |
-|-----------------------------------------+----------------------+-----------------------+--------------------------------------------|
-| getEmailList(u:User, s:Session)         | s.user.role=admin    | u:userSet             | Returns list of Email ids in the system    |
-|                                         |                      | s:sessionSet          |                                            |
-|-----------------------------------------+----------------------+-----------------------+--------------------------------------------|
-| userLogin(u:User, s:System)             |                      | u:userSet             | Success/Failure                            |
-|-----------------------------------------+----------------------+-----------------------+--------------------------------------------|
-| userLogout(u:User, s:Session)           |                      | u:userSet             | Logs a user out of a session               |
-|-----------------------------------------+----------------------+-----------------------+--------------------------------------------|
-| changeDetails(u:User, s:Session)        | s.user.role=admin OR | u:userSet             | Success/Failure                            |
-|                                         | s.user.role=user     | s:sessionSet          |                                            |
-|-----------------------------------------+----------------------+-----------------------+--------------------------------------------|
+|----------------------------------------+------------------------+----------------+-------------------|
+| Operation                              | Actor                  | Ref.           | Result            |
+|                                        | Credentials            | Integrity      |                   |
+|----------------------------------------+------------------------+----------------+-------------------|
+
