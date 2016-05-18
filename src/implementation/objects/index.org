@@ -106,7 +106,15 @@ def is_email(value):
         return False
 #+END_SRC
 
-
+*** is_role(value):
+#+BEGIN_SRC python :tangle ../../src/utils.py :eval no
+def is_role(value):
+    if value == "admin" or value == "normal":
+        return True
+    else :
+        return False
+#+END_SRC
+        
 
 ** Name
 
@@ -156,9 +164,13 @@ class TestName(TestCase):
 class Email(object):
     value = None
     def __init__(self, value):
-        print "fill"
+        if is_email(value) :
+           self.value = value
+        else :
+           raise TypeError('%s is not a Email!' % value)
+
     def __str__(self):
-        print "fill"
+        return self.value
         
 #+END_SRC
 
@@ -168,6 +180,11 @@ class TestEmail(TestCase):
     TESTING = True
     def test_email_type(self):
         print "test_email_type"
+        new_email = Email("Johnw@gmail.com")
+        # correct name
+        self.assertEqual(new_email.value, "Johnw@gmail.com")
+        # incorrect name
+        self.assertRaises(TypeError, Email, "sdfsdfsdfsfsdf")
 #+END_SRC
 
 ** User
@@ -180,11 +197,14 @@ class TestEmail(TestCase):
      + Email
      + Role
 
-
+       
 *** Definition
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
 class User():
     users = []     # this is a static variable, accessed by User.users
+    email = None
+    name = None
+    role = None
 #+END_SRC
 
 
@@ -200,8 +220,24 @@ class User():
     #+END_EXAMPLE
 
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
-    def __init__(self, **kwargs):
-        print "fill"
+    def __init__(self, kwargs):
+        if 'name' not in kwargs or 'email' not in kwargs or 'role' not in kwargs:
+            raise AttributeError("argument should be a dict with keys name, email and role")
+
+        elif not isinstance(kwargs['name'],Name)  :
+            raise AttributeError("name key must have an instance of Name class")
+
+        elif not isinstance(kwargs['email'],Email)  :
+            raise AttributeError("email key must have an instance of Email class")
+
+        elif not isinstance(kwargs['role'],Role)  :
+            raise AttributeError("role key must have an instance of Role class")
+
+        else :
+            self.name = kwargs['name']
+            self.email = kwargs['email']
+            self.role = kwargs['role']
+            User.users.append(self)
 #+END_SRC
 
 
@@ -211,37 +247,71 @@ class TestUser(TestCase):
     TESTING = True
 
     def test_user_creation_without_role(self):
-        print "test_user_creation_without_role"
+        temp = {'name': Name('john'), 'email': Email('john@gmail.com')}
+        self.assertRaises(AttributeError,User , temp )
 
     def test_user_creation_with_role(self):
-        print "test_user_creation_with_role"
- #+END_SRC
+        temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
+        inst = User(temp)
+        self.assertEqual(inst.get_name(),'john')
+        self.assertEqual(inst.get_email(),'john@gmail.com')
+        self.assertEqual(inst.get_role(),'admin')
+
+
+
+#+END_SRC
 
 
 *** Functions
-
+    
 **** setEmail
 ***** Implementaion
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
     def set_email(self, email):
-        print "fill"
+        if isinstance(email,Email):
+            self.email = email
+        else :
+            raise TypeError('argument must be an istance of email class')
+
 #+END_SRC
 
 ***** Test
-
+#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+    def test_setemail(self):
+        temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
+        inst = User(temp)
+        self.assertEqual(inst.get_email(),'john@gmail.com')
+        inst.set_email(Email('john123@gmail.com'));
+        self.assertEqual(inst.get_email(),'john123@gmail.com')
+#+END_SRC
 **** setName
 ***** Implementation
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
     def set_name(self, name):
-        print "fill"
+        if isinstance(name,Name):
+            self.name = name;
+        else :
+            raise TypeError('argument must be an istance of Name class')
+        
 #+END_SRC
 ***** Test
-
+#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+    def test_setname(self):
+        temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
+        inst = User(temp)
+        self.assertEqual(inst.get_name(),'john')
+        inst.set_name(Name('johnsnow'));
+        self.assertEqual(inst.get_name(),'johnsnow')
+#+END_SRC
 **** setRole
 ***** Implementation
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
     def set_role(self, role):
-        print "fill"
+        if isinstance(role,Role):
+            self.role = role;
+        else :
+            raise TypeError('attribute must be an istance of Role class')
+
 #+END_SRC
 ***** Test
 
@@ -249,7 +319,7 @@ class TestUser(TestCase):
 ***** Implementation
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
     def get_role(self):
-        print "fill"
+        print self.role.value
 #+END_SRC
 ***** Test
 
@@ -257,14 +327,14 @@ class TestUser(TestCase):
 **** getEmail
  #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
     def get_email(self):
-        print "fill"
+        return self.email.value
  #+END_SRC
 
 
 **** getName
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
     def get_name(self):
-        print "fill"
+        return self.name.value
 #+END_SRC
 
 
@@ -274,7 +344,7 @@ class TestUser(TestCase):
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
     @staticmethod
     def get_all():
-        print "fill"
+        return User.users
 #+END_SRC
 
 
@@ -321,7 +391,7 @@ class TestUser(TestCase):
 *** Definition
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
 class Role():
-
+    value = None
 #+END_SRC
 
 
@@ -329,12 +399,15 @@ class Role():
 
     The signature of Role is defined as follows
     #+BEGIN_EXAMPLE
-    role = Role(name=<Object of Name>)
+    role = Role("admin")
     #+END_EXAMPLE
 
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
-    def __init__(self, **kwargs):
-        print "fill"
+    def __init__(self, string):
+        if is_role(string)==False:
+            raise TypeError("Role can be admin or normal")
+        else :
+            self.value = string
 #+END_SRC
 
 *** Test Constructor
@@ -342,17 +415,25 @@ class Role():
 class TestRole(TestCase):
     TESTING = True
     def test_role_creation(self):
-        print "test_role_creation"
+        print "test_role"
+        new_name = Name("admin")
+        # correct name
+        self.assertEqual(new_name.value, "admin")
+        # incorrect name
+        self.assertRaises(TypeError, Role, "adminnormal")
 #+END_SRC
 
 
 *** Functions
 
-**** setName
+**** setrole
 ***** Implementation
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
-    def set_name(self, name):
-        print "fill"
+    def set_role(self, name):
+        if is_role(name)==False :
+            raise TypeError("role can be admin or normal")
+        else :
+            self.value = name
 #+END_SRC
 
 ****** Test
@@ -362,11 +443,11 @@ class TestRole(TestCase):
 #+END_SRC
 
 
-**** getName
+**** getrole
 
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
-    def get_name(self):
-        print "fill"
+    def get_role(self):
+        return self.value
 #+END_SRC
 
 
@@ -376,7 +457,7 @@ class TestRole(TestCase):
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
     @staticmethod
     def get_all():
-#        return Role.roles
+#        return ('admin','normal')
         pass
 #+END_SRC
 
