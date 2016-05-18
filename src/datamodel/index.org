@@ -218,4 +218,3 @@ types of actors:  =system= and =session=.
 | changeDetails(u:User, s:Session)        | s.user.role=admin OR | u:userSet             | Success/Failure                            |
 |                                         | s.user.role=user     | s:sessionSet          |                                            |
 |-----------------------------------------+----------------------+-----------------------+--------------------------------------------|
-|                                         |                      |                       |                                            |
