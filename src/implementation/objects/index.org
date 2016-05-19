@@ -260,10 +260,19 @@ class User():
  #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
 class TestUser(TestCase):
     TESTING = True
+    
+    def tearDown():
+        User.users = []
+        Session.session_list = []
+
+    def setup():
+        temp = {'name': Name('john'), 'email': Email('john@gmail.com')}
+        inst = User(temp)
+        User.add_user(inst)
 
     def test_user_creation_without_role(self):
         temp = {'name': Name('john'), 'email': Email('john@gmail.com')}
-        self.assertRaises(AttributeError,User , temp )
+        self.assertRaises(AttributeError,User, temp )
 
     def test_user_creation_with_role(self):
         temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
@@ -299,36 +308,6 @@ class TestUser(TestCase):
         self.assertEqual(inst.get_email(),'john@gmail.com')
         inst.set_email(Email('john123@gmail.com'));
         self.assertEqual(inst.get_email(),'john123@gmail.com')
-#+END_SRC
-**** adduser
-***** Implementaion
-#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
-    def add_user(self):
-        for i in range(0,len(User.users)):
-            if User.users[i].email.value == self.email.value:
-                raise ConstraintError ("Email id must be unique")
-                return
-
-        User.users.append(self);
-
-#        if existing_user :
-#            raise ConstraintError ("Email id must be unique")
-#        else :
-#            User.users.append(self)
-
-#+END_SRC
-
-***** Test
-#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
-    def test_adduser(self):
-        temp = {'name': Name('john'), 'email': Email('johnsnow@gmail.com') , 'role': Role('admin') }
-        temp1 = {'name': Name('johnsnow'), 'email': Email('johnsnow@gmail.com') , 'role': Role('admin') }
-        inst = User(temp)
-        inst1 = User(temp1)
-        inst.add_user();
-        print User.users[0].email.value
-        with self.assertRaises(ConstraintError):
-            inst1.add_user();
 #+END_SRC
 **** setName
 ***** Implementation
@@ -550,7 +529,7 @@ class TestRole(TestCase):
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
 class Session():
     user = None
-    session_list = []
+    session_list = [] # static list to
 #+END_SRC
 
 
@@ -563,6 +542,8 @@ class Session():
 
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
     def __init__(self, user):
+        if not isinstance(user,User):
+            raise TypeError('only instnaces of user class can get session')
         if user in User.users:
             self.user = user
 #+END_SRC
@@ -575,35 +556,33 @@ class TestSession(TestCase):
     def tearDown(self):
         User.users = []
         Session.session_list = []
-
-
-    def test_session_creation(self):
-        print "test_session"
+    
+    def setup():
         temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
         inst = User(temp)
         inst.add_user()
-        ses = Session(inst)
-        ses1 = Session(inst)
-        ses.add_session()
-        ses1.add_session()
-        if ses not in Session.session_list or ses1 not in Session.session_list :
-            raise ConstraintError("Multiple sessions are allowed ")
 
-        if ses.user != ses1.user :
-            raise ConstraintError("Multiple sessions are allowed ")
+        temp = {'name': Name('johnsnow'), 'email': Email('johnsnow@gmail.com') , 'role': Role('normal') }
+        inst = User(temp)
+        inst.add_user()       
+        
+
+    def test_session_creation(self):
+        s = Session(User.users[0])
+
+
 #+END_SRC
 
 
 *** Functions
 
+
 **** addsession
 ***** Implementation
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
-    def add_session(self):
-        if self not  in Session.session_list :
-            Session.session_list.append(self)
-        else :
-            raise ConstraintError('Session already exists')
+    def get_user(self):
+        if self in Session.session_list:
+            return self.user
 
 #+END_SRC
 
@@ -611,43 +590,57 @@ class TestSession(TestCase):
 #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
     def test_addsession(self):
         print 'testing Session: add session'
-        temp = {'name': Name('john'), 'email': Email('johnsnowa@gmail.com') , 'role': Role('admin') }
-        inst = User(temp)
-        inst.add_user()
-        s = Session(inst)
-        s.add_session()
-        with self.assertRaises(ConstraintError):
-            s.add_session()
 #+END_SRC
 
 
-**** add_user
+** System
+
+*** Introduction
+    
+    System class has all the system functions like get user, set user
+    delete user.
+
+    
+*** Mutable Data
+
+     These are the data associated with Role type, which are mutable
+     
+
+
+*** Definition
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+class System():
+#+END_SRC
+
+
+*** Functions
+
+
+**** addsession
 ***** Implementation
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
-    def add_user(self,user):
-        if self.user.get_role()!='admin' and self in Session.session_list:
-            raise ConstraintError ('Only an admin can add an user')
-        elif not isinstance(user,User):
-            raise AttributeError ('ONly instance of User class can be made a user')
-        else :
-            user.add_user()
+    def add_user(user,session):
+        if isinstance(user,User) and isinstance(session,Session):
+            if user not in User.users: 
+                if user.get_role()=='admin':
+                    User.users.append(user)
+                else :
+                    raise ConstraintError ('user must be admin to add a new user')
+            else :
+                raise ConstraintError ('User already exists')
+        else:
+            raise ConstraintError ('instances of user and session must be passed ')
+            
+
 #+END_SRC
 
 ***** Test
 #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
-    def test_adduser(self):
-        print 'testing Session:add_user'
-        temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
-        inst = User(temp)
-        inst.add_user()
-        ses = Session(inst)
-        ses.add_session()
-        temp = {'name': Name('johnsnow'), 'email': Email('johnsnow@gmail.com') , 'role': Role('normal') }
-        inst1 = User(temp)
-        ses.add_user(inst1)
-        if inst1 not in User.users:
-            raise ConstraintError('User not added')
+    def test_addsession(self):
+        print 'testing Session: add session'
 #+END_SRC
+
+
 
 
 * Run Test Cases
