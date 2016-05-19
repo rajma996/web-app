@@ -319,7 +319,7 @@ class TestUser(TestCase):
 ***** Implementation
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
     def get_role(self):
-        print self.role.value
+        return self.role.value
 #+END_SRC
 ***** Test
 
@@ -439,7 +439,10 @@ class TestRole(TestCase):
 ****** Test
 #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
     def test_role_set_name(self):
-        print "test_role_set_name"
+        temp_role = Role('admin')
+        self.assertEqual(temp_role.value,'admin')
+        temp_role.set_role('normal')
+        self.assertEqual(temp_role.value,'normal')
 #+END_SRC
 
 
@@ -465,7 +468,8 @@ class TestRole(TestCase):
 ***** Test getAll: Nil --> set[Role]
  #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
     def test_role_get_all(self):
-        print "test_role_get_all"
+        temp_role = Role('admin')
+        #self.assertEqual(temp_role.get_all(),('admin','normal'))
  #+END_SRC
 
 
