@@ -9,11 +9,12 @@
 
 
 * Initialization
-
+  
 ** Imports for Python API
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
 # -*- coding: utf-8 -*-
 from op_exceptions import AttributeRequired
+from op_exceptions import ConstraintError
 from utils import *
 #+END_SRC
 
@@ -28,6 +29,7 @@ from datetime import datetime
 
 from src.obj import *
 from src.op_exceptions import AttributeRequired
+from src.op_exceptions import ConstraintError
 
 #+END_SRC
 
@@ -73,6 +75,19 @@ class AttributeRequired(Exception):
 
     def __str__(self):
         return repr(self.str)
+#+END_SRC
+
+*** ConstraintError
+#+BEGIN_SRC python :tangle ../../src/op_exceptions.py :eval no
+class ConstraintError(Exception):
+    str = None
+
+    def __init__(self, str):
+        self.str = str
+
+    def __str__(self):
+        return repr(self.str)
+
 
 #+END_SRC
 
@@ -237,7 +252,7 @@ class User():
             self.name = kwargs['name']
             self.email = kwargs['email']
             self.role = kwargs['role']
-            User.users.append(self)
+           
 #+END_SRC
 
 
@@ -283,6 +298,36 @@ class TestUser(TestCase):
         self.assertEqual(inst.get_email(),'john@gmail.com')
         inst.set_email(Email('john123@gmail.com'));
         self.assertEqual(inst.get_email(),'john123@gmail.com')
+#+END_SRC
+**** adduser
+***** Implementaion
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    def add_user(self):
+        for i in range(0,len(User.users)):
+            if User.users[i].email.value == self.email.value:
+                raise ConstraintError ("Email id must be unique")
+                return
+
+        User.users.append(self);
+
+#        if existing_user :
+#            raise ConstraintError ("Email id must be unique")
+#        else :
+#            User.users.append(self)
+
+#+END_SRC
+
+***** Test
+#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+    def test_adduser(self):
+        temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
+        temp1 = {'name': Name('johnsnow'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
+        inst = User(temp)
+        inst1 = User(temp1)
+        inst.add_user();
+        print User.users[0].email.value
+        with self.assertRaises(ConstraintError):
+            inst1.add_user();
 #+END_SRC
 **** setName
 ***** Implementation
@@ -330,7 +375,7 @@ class TestUser(TestCase):
         return self.email.value
  #+END_SRC
 
-
+ 
 **** getName
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
     def get_name(self):
@@ -478,6 +523,8 @@ class TestRole(TestCase):
     def to_client(self):
         print "fill"
 #+END_SRC
+
+
 
 * Run Test Cases
  
