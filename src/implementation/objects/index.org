@@ -277,6 +277,7 @@ class TestUser(TestCase):
 #+END_SRC
 
 
+
 *** Functions
     
 **** setEmail
@@ -320,8 +321,8 @@ class TestUser(TestCase):
 ***** Test
 #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
     def test_adduser(self):
-        temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
-        temp1 = {'name': Name('johnsnow'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
+        temp = {'name': Name('john'), 'email': Email('johnsnow@gmail.com') , 'role': Role('admin') }
+        temp1 = {'name': Name('johnsnow'), 'email': Email('johnsnow@gmail.com') , 'role': Role('admin') }
         inst = User(temp)
         inst1 = User(temp1)
         inst.add_user();
@@ -524,6 +525,129 @@ class TestRole(TestCase):
         print "fill"
 #+END_SRC
 
+
+
+** Session
+
+*** Introduction
+    Session class essentially has the methods for addition, deletion and
+    editing the user. It gives a session instance which will do all these
+    things required. 
+    User cannot be edited or deleted when he/she is logged in
+    There has to be atleast one admin
+    Also getting all the email and named for the phone book are added here
+    Vaildations are taken care in User function.
+
+*** Mutable Data
+
+     These are the data associated with Role type, which are mutable
+
+     + User
+     + session_list
+
+
+*** Definition
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+class Session():
+    user = None
+    session_list = []
+#+END_SRC
+
+
+*** Constructor
+
+    The signature of Session is defined as follows
+    #+BEGIN_EXAMPLE
+    sesssion_instance = session(user)
+    #+END_EXAMPLE
+
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    def __init__(self, user):
+        if user in User.users:
+            self.user = user
+#+END_SRC
+
+*** Test Constructor
+#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+class TestSession(TestCase):
+    TESTING = True
+    
+    def tearDown(self):
+        User.users = []
+        Session.session_list = []
+
+
+    def test_session_creation(self):
+        print "test_session"
+        temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
+        inst = User(temp)
+        inst.add_user()
+        ses = Session(inst)
+        ses1 = Session(inst)
+        ses.add_session()
+        ses1.add_session()
+        if ses not in Session.session_list or ses1 not in Session.session_list :
+            raise ConstraintError("Multiple sessions are allowed ")
+
+        if ses.user != ses1.user :
+            raise ConstraintError("Multiple sessions are allowed ")
+#+END_SRC
+
+
+*** Functions
+
+**** addsession
+***** Implementation
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    def add_session(self):
+        if self not  in Session.session_list :
+            Session.session_list.append(self)
+        else :
+            raise ConstraintError('Session already exists')
+
+#+END_SRC
+
+***** Test
+#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+    def test_addsession(self):
+        print 'testing Session: add session'
+        temp = {'name': Name('john'), 'email': Email('johnsnowa@gmail.com') , 'role': Role('admin') }
+        inst = User(temp)
+        inst.add_user()
+        s = Session(inst)
+        s.add_session()
+        with self.assertRaises(ConstraintError):
+            s.add_session()
+#+END_SRC
+
+
+**** add_user
+***** Implementation
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    def add_user(self,user):
+        if self.user.get_role()!='admin' and self in Session.session_list:
+            raise ConstraintError ('Only an admin can add an user')
+        elif not isinstance(user,User):
+            raise AttributeError ('ONly instance of User class can be made a user')
+        else :
+            user.add_user()
+#+END_SRC
+
+***** Test
+#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+    def test_adduser(self):
+        print 'testing Session:add_user'
+        temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
+        inst = User(temp)
+        inst.add_user()
+        ses = Session(inst)
+        ses.add_session()
+        temp = {'name': Name('johnsnow'), 'email': Email('johnsnow@gmail.com') , 'role': Role('normal') }
+        inst1 = User(temp)
+        ses.add_user(inst1)
+        if inst1 not in User.users:
+            raise ConstraintError('User not added')
+#+END_SRC
 
 
 * Run Test Cases
