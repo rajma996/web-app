@@ -1017,6 +1017,50 @@ class TestSystem(TestCase):
 #+END_SRC
 
 
+** Main
+   
+*** Construction
+
+     the main class containing login and delete session
+
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+#+END_SRC
+
+
+*** Test the Construction
+#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+#+END_SRC
+
+
+
+
+*** Functions
+    
+**** login
+***** Implementaion
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+def login(user,sys):
+    
+    if isinstance(user,User) and isinstance(sys,System):
+        sessi = Session(user)
+        Session.session_list.append(sessi)
+    else :
+        raise ConstraintError('user and system instances required')
+
+def del_session(session,sys):
+
+    if isinstance(session,Session) and isinstance(sys,System):
+        if session in Session.session_list:
+            Session.session_list.remove(session)
+        else :
+            raise ConstraintError('session expired')
+    else :
+        raise ConstraintError('Session and system instances required')
+
+#+END_SRC
+
+
+
 * Run Test Cases
  
 #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
