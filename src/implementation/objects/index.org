@@ -16,6 +16,7 @@
 from op_exceptions import AttributeRequired
 from op_exceptions import ConstraintError
 from utils import *
+import copy
 #+END_SRC
 
 
@@ -226,7 +227,7 @@ class TestEmail(TestCase):
      + Role
 
        
-*** Definition
+*** [#B] Definition
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
 class User():
     users = []     # this is a static variable, accessed by User.users
@@ -678,7 +679,7 @@ class TestSystem(TestCase):
     def show_users(session):
         if isinstance(session,Session):
             if session in Session.session_list :
-                return User.users
+                return User.users[:]
             else :
                 raise ConstraintError('Session not in session list')
         else:
@@ -695,7 +696,12 @@ class TestSystem(TestCase):
         sessi = Session(inst)
         User.users.append(inst)
         Session.session_list.append(sessi)
-        self.assertEqual(System.show_users(sessi),User.users)
+        a = System.show_users(sessi)
+        for i in range(0,len(a)):
+            self.assertEqual(str(a[i].get_email()),str(User.users[i].get_email()))
+            self.assertEqual(str(a[i].get_name()),str(User.users[i].get_name()))
+            self.assertEqual(str(a[i].get_role()),str(User.users[i].get_role()))
+
 
 #+END_SRC
 
@@ -706,7 +712,7 @@ class TestSystem(TestCase):
     @staticmethod
     def del_user(user,session):
         if isinstance(user,User) and isinstance(session,Session):
-            if session.get_user().get_role()=='admin' and user.get_role()!='admin':
+            if session.get_user().get_role()=='admin' and user.get_role()!='admin' and session.get_user!=user:
                 print 'raju '
                 if user in User.users and session in Session.session_list :
                     User.users.remove(user)
@@ -911,6 +917,92 @@ class TestSystem(TestCase):
         self.assertEqual(inst1.get_email(),'johnsnow@gmail.com')
         self.assertEqual(System.getUserByEmail(Email('johnsnow@gmail.com'),sessi)[0],inst1)
 
+
+#+END_SRC
+
+
+**** setName
+***** Implementation
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    @staticmethod
+    def set_name(user,name,session):
+        if isinstance(user,User) and isinstance(session,Session) and isinstance(name,Name):
+            if session.user.get_role()=='admin' or session.user==user:
+               if user in User.users and session in Session.session_list:
+                   for i in range(0,len(User.users)):
+                       if User.users[i] == user:
+                           user.name = name
+                           User.users[i] = user
+               else :
+                   raise ConstraintError('user not existing or session expired')
+            else :
+                raise ConstraintError('Only admin of same user can edit the email')
+        else :
+            raise ConstraintError ('Proper instances of user,email, session not passed')
+
+#+END_SRC
+
+***** Test
+#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+    def test_setemail(self):
+        print 'testing System: set_name'
+        temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
+        temp1 = {'name': Name('johnsnow'), 'email': Email('johnsnow@gmail.com') , 'role': Role('normal') }
+        inst = User(temp)        
+        sessi = Session(inst)
+        inst1 = User(temp1)
+        sessi1 = Session(inst1)
+        User.users.append(inst)
+        Session.session_list.append(sessi)
+        User.users.append(inst1)
+        Session.session_list.append(sessi1)
+        System.set_name(inst1,Name('johnraj'),sessi) # admin changing
+        self.assertEqual(inst1.get_name(),'johnraj')
+        System.set_name(inst1,Name('johnsnow'),sessi1) # user changing bakc
+        self.assertEqual(inst1.get_name(),'johnsnow')
+
+#+END_SRC
+
+
+**** showsessions
+***** Implementation
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    @staticmethod
+    def showSessions(session):
+        if  isinstance(session,Session):
+            if session in Session.session_list:
+               if session.get_user().get_role() == 'admin':
+                   return Session.session_list[:]
+               else :
+                   raise ConstraintError('only admin can get session list')
+            else :
+                raise ConstraintError('session expired')
+        else :
+            raise ConstraintError ('instance of session class has to be passed')
+
+#+END_SRC
+
+***** Test
+#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+    def test_showsessions(self):
+        print 'testing System: show session'
+        temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
+        temp1 = {'name': Name('johnsnow'), 'email': Email('johnsnow@gmail.com') , 'role': Role('normal') }
+        inst = User(temp)        
+        sessi = Session(inst)
+        inst1 = User(temp1)
+        sessi1 = Session(inst1)
+        User.users.append(inst)
+        Session.session_list.append(sessi)
+        User.users.append(inst1)
+        Session.session_list.append(sessi1)
+        with self.assertRaises(ConstraintError):
+            a = System.showSessions(sessi1)
+        b = System.showSessions(sessi)
+        for i in range(0,len(b)):
+            self.assertEqual(str(b[i].get_user().get_email()),str(Session.session_list[i].get_user.get_email()))
+            self.assertEqual(str(b[i].get_user().get_name()),str(Session.session_list[i].get_user.get_name()))
+            self.assertEqual(str(b[i].get_user().get_role()),str(Session.session_list[i].get_user.get_role()))
 
 #+END_SRC
 
