@@ -614,12 +614,16 @@ class TestSystem(TestCase):
             if session.get_user().get_role()=='admin':
                 if user.get_email() not in [User.users[i].get_email() for i in range(0,len(User.users))]:
                     User.users.append(user)
+                    return True
                 else :
                     raise ConstraintError ('User already exists')
+                    return False
             else :
                 raise ConstraintError ('User must be admin to add a new user')
+                return False
         else:
             raise ConstraintError ('instances of user and session must be passed')            
+            return False
 
 #+END_SRC
 
@@ -677,6 +681,53 @@ class TestSystem(TestCase):
         User.users.append(inst)
         Session.session_list.append(sessi)
         self.assertEqual(System.show_users(sessi),User.users)
+
+#+END_SRC
+
+
+**** deluser
+***** Implementation
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    @staticmethod
+    def del_user(user,session):
+        if isinstance(user,User) and isinstance(session,Session):
+            if session.get_user().get_role()=='admin' and user.get_role()!='admin':
+                print 'raju '
+                if user in User.users and session in Session.session_list :
+                    User.users.remove(user)
+                else :
+                    raise ConstraintError('user not in list or session not present')
+            else :
+                raise ConstraintError('only admin can delete and admin cannot be removed')
+        else:
+            raise ConstraintError ('Instance of user and session not passed')            
+
+#+END_SRC
+
+***** Test
+#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+    def test_deluser(self):
+        print 'testing System: del_users'
+        temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
+        temp1 = {'name': Name('johnsnow'), 'email': Email('johnsnow@gmail.com') , 'role': Role('normal') }
+        inst = User(temp)        
+        sessi = Session(inst)
+        inst1 = User(temp1)
+        sessi1 = Session(inst1)
+        User.users.append(inst)
+        Session.session_list.append(sessi)
+        User.users.append(inst1)
+        Session.session_list.append(sessi1)
+        with self.assertRaises(ConstraintError):
+            temp2 = {'name': Name('raj'), 'email': Email('raj@gmail.com') , 'role': Role('normal') }
+            inst2 = User(temp2)
+            User.users.append(inst2)
+            System.del_user(inst2,sessi1)
+        with self.assertRaises(ConstraintError):
+            temp2 = {'name': Name('raj'), 'email': Email('raj@gmail.com') , 'role': Role('admin') }
+            inst2 = User(temp2)
+            User.users.append(inst2)
+            System.del_user(inst2,sessi)
 
 #+END_SRC
 
