@@ -651,6 +651,36 @@ class TestSystem(TestCase):
         
 #+END_SRC
 
+
+**** showUsers
+***** Implementation
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    @staticmethod
+    def show_users(session):
+        if isinstance(session,Session):
+            if session in Session.session_list :
+                return User.users
+            else :
+                raise ConstraintError('Session not in session list')
+        else:
+            raise ConstraintError ('Instance of session not passed')            
+
+#+END_SRC
+
+***** Test
+#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+    def test_adduser(self):
+        print 'testing System: get_users'
+        temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
+        inst = User(temp)        
+        sessi = Session(inst)
+        User.users.append(inst)
+        Session.session_list.append(sessi)
+        self.assertEqual(System.show_users(sessi),User.users)
+
+#+END_SRC
+
+
 * Run Test Cases
  
 #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
