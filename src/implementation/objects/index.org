@@ -611,8 +611,8 @@ class TestSystem(TestCase):
     @staticmethod
     def add_user(user,session):
         if isinstance(user,User) and isinstance(session,Session):
-            if user.get_role()=='admin':
-                if user.email not in [User.users[i].email.value for i in range(0,len(User.users))]:
+            if session.get_user().get_role()=='admin':
+                if user.get_email() not in [User.users[i].get_email() for i in range(0,len(User.users))]:
                     User.users.append(user)
                 else :
                     raise ConstraintError ('User already exists')
@@ -642,12 +642,14 @@ class TestSystem(TestCase):
         with self.assertRaises(ConstraintError):
             temp2 = {'name': Name('raj'), 'email': Email('raj@gmail.com') , 'role': Role('admin') }
             inst2 = User(temp2)
-            System.add_user(inst2,sessi1)            
+            System.add_user(inst2,sessi1)
+        with self.assertRaises(ConstraintError):
+            temp2 = {'name': Name('raj'), 'email': Email('raj@gmail.com') , 'role': Role('admin') }
+            inst2 = User(temp2)
+            System.add_user(sessi,inst2)
+
         
 #+END_SRC
-
-
-
 
 * Run Test Cases
  
