@@ -863,8 +863,54 @@ class TestSystem(TestCase):
         sessi = Session(inst)
         User.users.append(inst)
         Session.session_list.append(sessi)
-        a = System.get_email(inst,sessi)
+        a = System.get_role(inst,sessi)
         self.assertEqual(a,'admin')
+
+#+END_SRC
+
+
+**** setEmail
+***** Implementation
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    @staticmethod
+    def set_email(user,email,session):
+        if isinstance(user,User) and isinstance(session,Session) and isinstance(email,Email):
+            if session.user.get_role()=='admin' or session.user==user:
+               if user in User.users and session in Session.session_list:
+                   for i in range(0,len(User.users)):
+                       if User.users[i] == user:
+                           user.email = email
+                           User.users[i] = user
+               else :
+                   raise ConstraintError('user not existing or session expired')
+            else :
+                raise ConstraintError('Only admin of same user can edit the email')
+        else :
+            raise ConstraintError ('Proper instances of user,email, session not passed')
+
+#+END_SRC
+
+***** Test
+#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+    def test_setemail(self):
+        print 'testing System: set_email'
+        temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
+        temp1 = {'name': Name('johnsnow'), 'email': Email('johnsnow@gmail.com') , 'role': Role('normal') }
+        inst = User(temp)        
+        sessi = Session(inst)
+        inst1 = User(temp1)
+        sessi1 = Session(inst1)
+        User.users.append(inst)
+        Session.session_list.append(sessi)
+        User.users.append(inst1)
+        Session.session_list.append(sessi1)
+        System.set_email(inst1,Email('johnraj@gmail.com'),sessi) # admin changing
+        self.assertEqual(inst1.get_email(),'johnraj@gmail.com')
+        self.assertEqual(System.getUserByEmail(Email('johnraj@gmail.com'),sessi)[0],inst1)
+        System.set_email(inst1,Email('johnsnow@gmail.com'),sessi1) # user changing bakc
+        self.assertEqual(inst1.get_email(),'johnsnow@gmail.com')
+        self.assertEqual(System.getUserByEmail(Email('johnsnow@gmail.com'),sessi)[0],inst1)
+
 
 #+END_SRC
 
