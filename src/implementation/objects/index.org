@@ -202,6 +202,19 @@ class TestEmail(TestCase):
         self.assertRaises(TypeError, Email, "sdfsdfsdfsfsdf")
 #+END_SRC
 
+
+*** Functions
+    
+**** getemail
+***** Implementaion
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    def get_email(self):
+        return self.value
+
+#+END_SRC
+
+
+
 ** User
 
 *** Mutable Data
@@ -596,9 +609,11 @@ class System():
 class TestSystem(TestCase):
     
     def setup():
+        pass
+
+    def tearDown(self):
         User.users = []
         Session.session_list = []
-
 
 #+END_SRC
 
@@ -728,6 +743,128 @@ class TestSystem(TestCase):
             inst2 = User(temp2)
             User.users.append(inst2)
             System.del_user(inst2,sessi)
+
+#+END_SRC
+
+
+**** getuserbyemail
+***** Implementation
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    @staticmethod
+    def getUserByEmail(email,session):
+        if isinstance(session,Session) and isinstance(email,Email):
+            if session in Session.session_list:
+                return [user for user in User.users if user.get_email()==email.get_email()]
+            else :
+                raise ConstraintError('session not valid')
+        else:
+            raise ConstraintError ('Instance of Email and session not passed')     
+
+#+END_SRC
+
+***** Test
+#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+    def test_getuserbyemail(self):
+        print 'testing System: get_user by email'
+        temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
+        inst = User(temp)        
+        sessi = Session(inst)
+        User.users.append(inst)
+        Session.session_list.append(sessi)
+        a = System.getUserByEmail(Email('john@gmail.com'),sessi)
+        self.assertEqual(a[0].get_name(),'john')
+        self.assertEqual(len(a),1)
+        self.assertEqual(a[0].get_email(),'john@gmail.com')
+
+#+END_SRC
+
+
+**** getEmail
+***** Implementation
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    @staticmethod
+    def get_email(user,session):
+        if isinstance(user,User) and isinstance(session,Session):
+            if user in User.users and session in Session.session_list:
+                return [u.get_email() for u in User.users if u==user][0]
+            else :
+                raise ConstraintError('user doesnot exists or invalid session')
+        else:
+            raise ConstraintError ('Instance of session not passed')            
+
+#+END_SRC
+
+***** Test
+#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+    def test_getemail(self):
+        print 'testing System: get_email'
+        temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
+        inst = User(temp)        
+        sessi = Session(inst)
+        User.users.append(inst)
+        Session.session_list.append(sessi)
+        a = System.get_email(inst,sessi)
+        self.assertEqual(a,'john@gmail.com')
+
+#+END_SRC
+
+
+**** getName
+***** Implementation
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    @staticmethod
+    def get_name(user,session):
+        if isinstance(user,User) and isinstance(session,Session):
+            if user in User.users and session in Session.session_list:
+                return [u.get_name() for u in User.users if u==user][0]
+            else :
+                raise ConstraintError('user doesnot exists or invalid session')
+        else:
+            raise ConstraintError ('Instance of session not passed')            
+
+#+END_SRC
+
+***** Test
+#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+    def test_getemail(self):
+        print 'testing System: get_email'
+        temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
+        inst = User(temp)        
+        sessi = Session(inst)
+        User.users.append(inst)
+        Session.session_list.append(sessi)
+        a = System.get_email(inst,sessi)
+        self.assertEqual(a,'john')
+
+#+END_SRC
+
+
+**** getrole
+***** Implementation
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    @staticmethod
+    def get_role(user,session):
+        if isinstance(user,User) and isinstance(session,Session):
+            if user in User.users and session in Session.session_list:
+                return [u.get_role() for u in User.users if u==user][0]
+            else :
+                raise ConstraintError('user doesnot exists or invalid session')
+        else:
+            raise ConstraintError ('Instance of session not passed')            
+
+#+END_SRC
+
+***** Test
+#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+    def test_getemail(self):
+        print 'testing System: get_email'
+        temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
+        inst = User(temp)        
+        sessi = Session(inst)
+        User.users.append(inst)
+        Session.session_list.append(sessi)
+        a = System.get_email(inst,sessi)
+        self.assertEqual(a,'admin')
 
 #+END_SRC
 
