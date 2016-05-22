@@ -1,5 +1,5 @@
 #+title:  Object  Implementation of Mini Version of User Directory Application
-#+AUTHOR: VLEAD
+#+AUTHOR: Raj Manvar
 #+DATE: [2016-05-11 Wed]
 #+PROPERTY: results output
 #+PROPERTY: exports code
@@ -261,15 +261,7 @@ class User():
 class TestUser(TestCase):
     TESTING = True
     
-    def tearDown():
-        User.users = []
-        Session.session_list = []
-
-    def setup():
-        temp = {'name': Name('john'), 'email': Email('john@gmail.com')}
-        inst = User(temp)
-        User.add_user(inst)
-
+ 
     def test_user_creation_without_role(self):
         temp = {'name': Name('john'), 'email': Email('john@gmail.com')}
         self.assertRaises(AttributeError,User, temp )
@@ -544,8 +536,7 @@ class Session():
     def __init__(self, user):
         if not isinstance(user,User):
             raise TypeError('only instnaces of user class can get session')
-        if user in User.users:
-            self.user = user
+        self.user = user
 #+END_SRC
 
 *** Test Constructor
@@ -553,23 +544,6 @@ class Session():
 class TestSession(TestCase):
     TESTING = True
     
-    def tearDown(self):
-        User.users = []
-        Session.session_list = []
-    
-    def setup():
-        temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
-        inst = User(temp)
-        inst.add_user()
-
-        temp = {'name': Name('johnsnow'), 'email': Email('johnsnow@gmail.com') , 'role': Role('normal') }
-        inst = User(temp)
-        inst.add_user()       
-        
-
-    def test_session_creation(self):
-        s = Session(User.users[0])
-
 
 #+END_SRC
 
@@ -577,11 +551,10 @@ class TestSession(TestCase):
 *** Functions
 
 
-**** addsession
+**** get_user
 ***** Implementation
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
     def get_user(self):
-        if self in Session.session_list:
             return self.user
 
 #+END_SRC
@@ -589,7 +562,11 @@ class TestSession(TestCase):
 ***** Test
 #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
     def test_addsession(self):
-        print 'testing Session: add session'
+        print 'testing session:add session'
+        temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
+        inst = User(temp)
+        sess = Session(inst)
+        self.assertEqual(inst,sess.get_user())
 #+END_SRC
 
 
@@ -612,32 +589,61 @@ class TestSession(TestCase):
 class System():
 #+END_SRC
 
+*** Constructor
+
+*** Test Constructor
+ #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+class TestSystem(TestCase):
+    
+    def setup():
+        User.users = []
+        Session.session_list = []
+
+
+#+END_SRC
+
 
 *** Functions
 
-
-**** addsession
+**** adduser
 ***** Implementation
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+    @staticmethod
     def add_user(user,session):
         if isinstance(user,User) and isinstance(session,Session):
-            if user not in User.users: 
-                if user.get_role()=='admin':
+            if user.get_role()=='admin':
+                if user.email not in [User.users[i].email.value for i in range(0,len(User.users))]:
                     User.users.append(user)
                 else :
-                    raise ConstraintError ('user must be admin to add a new user')
+                    raise ConstraintError ('User already exists')
             else :
-                raise ConstraintError ('User already exists')
+                raise ConstraintError ('User must be admin to add a new user')
         else:
-            raise ConstraintError ('instances of user and session must be passed ')
-            
+            raise ConstraintError ('instances of user and session must be passed')            
 
 #+END_SRC
 
 ***** Test
 #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
-    def test_addsession(self):
-        print 'testing Session: add session'
+    def test_adduser(self):
+        print 'testing System: adduser'
+        temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
+        temp1 = {'name': Name('johnsnow'), 'email': Email('johnsnow@gmail.com') , 'role': Role('normal') }
+        inst = User(temp)        
+        sessi = Session(inst)
+        inst1 = User(temp1)
+        sessi1 = Session(inst1)
+        User.users.append(inst)
+        Session.session_list.append(sessi)
+        User.users.append(inst1)
+        Session.session_list.append(sessi1)
+        with self.assertRaises(ConstraintError):
+            System.add_user(inst1,sessi)
+        with self.assertRaises(ConstraintError):
+            temp2 = {'name': Name('raj'), 'email': Email('raj@gmail.com') , 'role': Role('admin') }
+            inst2 = User(temp2)
+            System.add_user(inst2,sessi1)            
+        
 #+END_SRC
 
 
