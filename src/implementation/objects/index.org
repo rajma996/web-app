@@ -227,10 +227,9 @@ class TestEmail(TestCase):
      + Role
 
        
-*** [#B] Definition
+***  Definition
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
 class User():
-    users = []     # this is a static variable, accessed by User.users
     email = None
     name = None
     role = None
@@ -369,22 +368,6 @@ class TestUser(TestCase):
 #+END_SRC
 
 
-**** getAll: Nil --> set[User]
-
-***** Implementation
-#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
-    @staticmethod
-    def get_all():
-        return User.users
-#+END_SRC
-
-
-***** Test getAll
-#+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
-    def test_user_get_all(self):
-        print "test_user_get_all"
-
-#+END_SRC
 
 
 **** toClient
@@ -535,7 +518,6 @@ class TestRole(TestCase):
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
 class Session():
     user = None
-    session_list = [] # static list to
 #+END_SRC
 
 
@@ -601,20 +583,35 @@ class TestSession(TestCase):
 *** Definition
 #+BEGIN_SRC python :tangle ../../src/obj.py :eval no
 class System():
+    users = []
+    session_list = []
 #+END_SRC
 
 *** Constructor
 
 *** Test Constructor
  #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
+global sys
 class TestSystem(TestCase):
     
     def setup():
-        pass
+        temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
+        temp1 = {'name': Name('johnsnow'), 'email': Email('johnsnow@gmail.com') , 'role': Role('normal') }
+        inst = User(temp)        
+        sessi = Session(inst)
+        inst1 = User(temp1)
+        sessi1 = Session(inst1)
+        global sys
+        sys  = System()
+        sys.users.append(inst)
+        sys.session_list.append(sessi)
+        sys.users.append(inst1)
+        sys.session_list.append(sessi1)
 
     def tearDown(self):
-        User.users = []
-        Session.session_list = []
+        global sys
+        sys.users = []
+        sys.session_list = []
 
 #+END_SRC
 
@@ -628,8 +625,8 @@ class TestSystem(TestCase):
     def add_user(self,user,session):
         if isinstance(user,User) and isinstance(session,Session):
             if session.get_user().get_role()=='admin':
-                if user.get_email() not in [User.users[i].get_email() for i in range(0,len(User.users))]:
-                    User.users.append(user)
+                if user.get_email() not in [self.users[i].get_email() for i in range(0,len(self.users))]:
+                    self.users.append(user)
                     return True
                 else :
                     raise ConstraintError ('User already exists')
@@ -647,17 +644,8 @@ class TestSystem(TestCase):
 #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
     def test_adduser(self):
         print 'testing System: adduser'
-        temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
-        temp1 = {'name': Name('johnsnow'), 'email': Email('johnsnow@gmail.com') , 'role': Role('normal') }
-        inst = User(temp)        
-        sessi = Session(inst)
-        inst1 = User(temp1)
-        sessi1 = Session(inst1)
-        User.users.append(inst)
-        Session.session_list.append(sessi)
-        User.users.append(inst1)
-        Session.session_list.append(sessi1)
-        s = System()
+        global sys
+        admin_logged = [s for s in sys.session_list if s.get_user().get_role()=='admin']
         with self.assertRaises(ConstraintError):
             s.add_user(inst1,sessi)
         with self.assertRaises(ConstraintError):
@@ -679,8 +667,8 @@ class TestSystem(TestCase):
   
     def show_users(self,session):
         if isinstance(session,Session):
-            if session in Session.session_list :
-                return User.users[:]
+            if session in self.session_list :
+                return self.users[:]
             else :
                 raise ConstraintError('Session not in session list')
         else:
@@ -695,14 +683,14 @@ class TestSystem(TestCase):
         temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
         inst = User(temp)        
         sessi = Session(inst)
-        User.users.append(inst)
-        Session.session_list.append(sessi)
+        self.users.append(inst)
+        self.session_list.append(sessi)
         s = System()
         a = s.show_users(sessi)
         for i in range(0,len(a)):
-            self.assertEqual(str(a[i].get_email()),str(User.users[i].get_email()))
-            self.assertEqual(str(a[i].get_name()),str(User.users[i].get_name()))
-            self.assertEqual(str(a[i].get_role()),str(User.users[i].get_role()))
+            self.assertEqual(str(a[i].get_email()),str(self.users[i].get_email()))
+            self.assertEqual(str(a[i].get_name()),str(self.users[i].get_name()))
+            self.assertEqual(str(a[i].get_role()),str(self.users[i].get_role()))
 
 
 #+END_SRC
@@ -716,8 +704,8 @@ class TestSystem(TestCase):
         if isinstance(user,User) and isinstance(session,Session):
             if session.get_user().get_role()=='admin' and user.get_role()!='admin' and session.get_user!=user:
                 print 'raju '
-                if user in User.users and session in Session.session_list :
-                    User.users.remove(user)
+                if user in self.users and session in self.session_list :
+                    self.users.remove(user)
                 else :
                     raise ConstraintError('user not in list or session not present')
             else :
@@ -731,26 +719,16 @@ class TestSystem(TestCase):
 #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
     def test_deluser(self):
         print 'testing System: del_users'
-        temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
-        temp1 = {'name': Name('johnsnow'), 'email': Email('johnsnow@gmail.com') , 'role': Role('normal') }
-        inst = User(temp)        
-        sessi = Session(inst)
-        inst1 = User(temp1)
-        sessi1 = Session(inst1)
-        User.users.append(inst)
-        Session.session_list.append(sessi)
-        User.users.append(inst1)
-        Session.session_list.append(sessi1)
         s = System()
         with self.assertRaises(ConstraintError):
             temp2 = {'name': Name('raj'), 'email': Email('raj@gmail.com') , 'role': Role('normal') }
             inst2 = User(temp2)
-            User.users.append(inst2)
+            self.users.append(inst2)
             s.del_user(inst2,sessi1)
         with self.assertRaises(ConstraintError):
             temp2 = {'name': Name('raj'), 'email': Email('raj@gmail.com') , 'role': Role('admin') }
             inst2 = User(temp2)
-            User.users.append(inst2)
+            self.users.append(inst2)
             s.del_user(inst2,sessi)
 
 #+END_SRC
@@ -762,8 +740,8 @@ class TestSystem(TestCase):
  
     def getUserByEmail(self,email,session):
         if isinstance(session,Session) and isinstance(email,Email):
-            if session in Session.session_list:
-                return [user for user in User.users if user.get_email()==email.get_email()]
+            if session in self.session_list:
+                return [user for user in self.users if user.get_email()==email.get_email()]
             else :
                 raise ConstraintError('session not valid')
         else:
@@ -778,9 +756,9 @@ class TestSystem(TestCase):
         temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
         inst = User(temp)        
         sessi = Session(inst)
-        User.users.append(inst)
+        self.users.append(inst)
         s = System()
-        Session.session_list.append(sessi)
+        self.session_list.append(sessi)
         a = s.getUserByEmail(Email('john@gmail.com'),sessi)
         self.assertEqual(a[0].get_name(),'john')
         self.assertEqual(len(a),1)
@@ -795,8 +773,8 @@ class TestSystem(TestCase):
 
     def get_email(self,user,session):
         if isinstance(user,User) and isinstance(session,Session):
-            if user in User.users and session in Session.session_list:
-                return [u.get_email() for u in User.users if u==user][0]
+            if user in self.users and session in self.session_list:
+                return [u.get_email() for u in self.users if u==user][0]
             else :
                 raise ConstraintError('user doesnot exists or invalid session')
         else:
@@ -811,8 +789,8 @@ class TestSystem(TestCase):
         temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
         inst = User(temp)        
         sessi = Session(inst)
-        User.users.append(inst)
-        Session.session_list.append(sessi)
+        self.users.append(inst)
+        self.session_list.append(sessi)
         s = System()
         a = s.get_email(inst,sessi)
         self.assertEqual(a,'john@gmail.com')
@@ -826,8 +804,8 @@ class TestSystem(TestCase):
  
     def get_name(self,user,session):
         if isinstance(user,User) and isinstance(session,Session):
-            if user in User.users and session in Session.session_list:
-                return [u.get_name() for u in User.users if u==user][0]
+            if user in self.users and session in self.session_list:
+                return [u.get_name() for u in self.users if u==user][0]
             else :
                 raise ConstraintError('user doesnot exists or invalid session')
         else:
@@ -842,8 +820,8 @@ class TestSystem(TestCase):
         temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
         inst = User(temp)        
         sessi = Session(inst)
-        User.users.append(inst)
-        Session.session_list.append(sessi)
+        self.users.append(inst)
+        self.session_list.append(sessi)
         s = System()
         a = s.get_email(inst,sessi)
         self.assertEqual(a,'john')
@@ -857,8 +835,8 @@ class TestSystem(TestCase):
 
     def get_role(self,user,session):
         if isinstance(user,User) and isinstance(session,Session):
-            if user in User.users and session in Session.session_list:
-                return [u.get_role() for u in User.users if u==user][0]
+            if user in self.users and session in self.session_list:
+                return [u.get_role() for u in self.users if u==user][0]
             else :
                 raise ConstraintError('user doesnot exists or invalid session')
         else:
@@ -873,9 +851,9 @@ class TestSystem(TestCase):
         temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
         inst = User(temp)        
         sessi = Session(inst)
-        User.users.append(inst)
+        self.users.append(inst)
         s = System()
-        Session.session_list.append(sessi)
+        self.session_list.append(sessi)
         a = s.get_role(inst,sessi)
         self.assertEqual(a,'admin')
 
@@ -889,11 +867,11 @@ class TestSystem(TestCase):
     def set_email(self,user,email,session):
         if isinstance(user,User) and isinstance(session,Session) and isinstance(email,Email):
             if session.user.get_role()=='admin' or session.user==user:
-               if user in User.users and session in Session.session_list:
-                   for i in range(0,len(User.users)):
-                       if User.users[i] == user:
+               if user in self.users and session in self.session_list:
+                   for i in range(0,len(self.users)):
+                       if self.users[i] == user:
                            user.email = email
-                           User.users[i] = user
+                           self.users[i] = user
                else :
                    raise ConstraintError('user not existing or session expired')
             else :
@@ -913,10 +891,10 @@ class TestSystem(TestCase):
         sessi = Session(inst)
         inst1 = User(temp1)
         sessi1 = Session(inst1)
-        User.users.append(inst)
-        Session.session_list.append(sessi)
-        User.users.append(inst1)
-        Session.session_list.append(sessi1)
+        self.users.append(inst)
+        self.session_list.append(sessi)
+        self.users.append(inst1)
+        self.session_list.append(sessi1)
         s = System()
         s.set_email(inst1,Email('johnraj@gmail.com'),sessi) # admin changing
         self.assertEqual(inst1.get_email(),'johnraj@gmail.com')
@@ -936,11 +914,11 @@ class TestSystem(TestCase):
     def set_name(self,user,name,session):
         if isinstance(user,User) and isinstance(session,Session) and isinstance(name,Name):
             if session.user.get_role()=='admin' or session.user==user:
-               if user in User.users and session in Session.session_list:
-                   for i in range(0,len(User.users)):
-                       if User.users[i] == user:
+               if user in self.users and session in self.session_list:
+                   for i in range(0,len(self.users)):
+                       if self.users[i] == user:
                            user.name = name
-                           User.users[i] = user
+                           self.users[i] = user
                else :
                    raise ConstraintError('user not existing or session expired')
             else :
@@ -960,10 +938,10 @@ class TestSystem(TestCase):
         sessi = Session(inst)
         inst1 = User(temp1)
         sessi1 = Session(inst1)
-        User.users.append(inst)
-        Session.session_list.append(sessi)
-        User.users.append(inst1)
-        Session.session_list.append(sessi1)
+        self.users.append(inst)
+        self.session_list.append(sessi)
+        self.users.append(inst1)
+        self.session_list.append(sessi1)
         s = System()
         s.set_name(inst1,Name('johnraj'),sessi) # admin changing
         self.assertEqual(inst1.get_name(),'johnraj')
@@ -979,9 +957,9 @@ class TestSystem(TestCase):
 
     def showSessions(self,session):
         if  isinstance(session,Session):
-            if session in Session.session_list:
+            if session in self.session_list:
                if session.get_user().get_role() == 'admin':
-                   return Session.session_list[:]
+                   return self.session_list[:]
                else :
                    raise ConstraintError('only admin can get session list')
             else :
@@ -1001,18 +979,18 @@ class TestSystem(TestCase):
         sessi = Session(inst)
         inst1 = User(temp1)
         sessi1 = Session(inst1)
-        User.users.append(inst)
-        Session.session_list.append(sessi)
-        User.users.append(inst1)
-        Session.session_list.append(sessi1)
+        self.users.append(inst)
+        self.session_list.append(sessi)
+        self.users.append(inst1)
+        self.session_list.append(sessi1)
         s = System()
         with self.assertRaises(ConstraintError):
             a = s.showSessions(sessi1)
         b = s.showSessions(sessi)
         for i in range(0,len(b)):
-            self.assertEqual(str(b[i].get_user().get_email()),str(Session.session_list[i].get_user().get_email()))
-            self.assertEqual(str(b[i].get_user().get_name()),str(Session.session_list[i].get_user().get_name()))
-            self.assertEqual(str(b[i].get_user().get_role()),str(Session.session_list[i].get_user().get_role()))
+            self.assertEqual(str(b[i].get_user().get_email()),str(self.session_list[i].get_user().get_email()))
+            self.assertEqual(str(b[i].get_user().get_name()),str(self.session_list[i].get_user().get_name()))
+            self.assertEqual(str(b[i].get_user().get_role()),str(self.session_list[i].get_user().get_role()))
 
 #+END_SRC
 
@@ -1043,15 +1021,15 @@ def login(user,sys):
     
     if isinstance(user,User) and isinstance(sys,System):
         sessi = Session(user)
-        Session.session_list.append(sessi)
+        sys.session_list.append(sessi)
     else :
         raise ConstraintError('user and system instances required')
 
 def del_session(session,sys):
 
     if isinstance(session,Session) and isinstance(sys,System):
-        if session in Session.session_list:
-            Session.session_list.remove(session)
+        if session in self.session_list:
+            sys.session_list.remove(session)
         else :
             raise ConstraintError('session expired')
     else :

@@ -1,0 +1,29 @@
+#    -*- mode: org -*-
+
+
+Archived entries from file /home/raj/web-app/src/implementation/objects/index.org
+
+
+* Implementation
+  :PROPERTIES:
+  :ARCHIVE_TIME: 2016-05-23 Mon 09:15
+  :ARCHIVE_FILE: ~/web-app/src/implementation/objects/index.org
+  :ARCHIVE_OLPATH: Object Model/System/Functions/showsessions
+  :ARCHIVE_CATEGORY: index
+  :END:
+#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+
+    def showSessions(self,session):
+        if  isinstance(session,Session):
+            if session in Session.session_list:
+               if session.get_user().get_role() == 'admin':
+                    return copy.deepcopy(Session.session_list)
+               else :
+                   raise ConstraintError('only admin can get session list')
+            else :
+                raise ConstraintError('session expired')
+        else :
+            raise ConstraintError ('instance of session class has to be passed')
+
+#+END_SRC
+
