@@ -591,10 +591,12 @@ class System():
 
 *** Test Constructor
  #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
-global sys
+sys = System()
 class TestSystem(TestCase):
+
+    TESTING = True
     
-    def setup():
+    def setUp(self):
         temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
         temp1 = {'name': Name('johnsnow'), 'email': Email('johnsnow@gmail.com') , 'role': Role('normal') }
         inst = User(temp)        
@@ -602,7 +604,6 @@ class TestSystem(TestCase):
         inst1 = User(temp1)
         sessi1 = Session(inst1)
         global sys
-        sys  = System()
         sys.users.append(inst)
         sys.session_list.append(sessi)
         sys.users.append(inst1)
@@ -646,16 +647,17 @@ class TestSystem(TestCase):
         print 'testing System: adduser'
         global sys
         admin_logged = [s for s in sys.session_list if s.get_user().get_role()=='admin']
-        with self.assertRaises(ConstraintError):
-            s.add_user(inst1,sessi)
-        with self.assertRaises(ConstraintError):
+        normal_logged = [s for s in sys.session_list if s.get_user().get_role()=='normal']
+        with self.assertRaises(ConstraintError): # trying to add same user
+            sys.add_user(normal_logged[0].get_user(),admin_logged)
+        with self.assertRaises(ConstraintError): # normal uesr trying to add user
             temp2 = {'name': Name('raj'), 'email': Email('raj@gmail.com') , 'role': Role('admin') }
             inst2 = User(temp2)
-            s.add_user(inst2,sessi1)
-        with self.assertRaises(ConstraintError):
+            sys.add_user(inst2,normal_logged[0])
+        with self.assertRaises(ConstraintError): # proper instances not passed
             temp2 = {'name': Name('raj'), 'email': Email('raj@gmail.com') , 'role': Role('admin') }
             inst2 = User(temp2)
-            s.add_user(sessi,inst2)
+            sys.add_user(admin_logged[0],inst2)
 
         
 #+END_SRC
@@ -668,7 +670,7 @@ class TestSystem(TestCase):
     def show_users(self,session):
         if isinstance(session,Session):
             if session in self.session_list :
-                return self.users[:]
+                return copy.deepcopy(self.users)
             else :
                 raise ConstraintError('Session not in session list')
         else:
@@ -678,19 +680,16 @@ class TestSystem(TestCase):
 
 ***** Test
 #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
-    def test_adduser(self):
-        print 'testing System: get_users'
-        temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
-        inst = User(temp)        
-        sessi = Session(inst)
-        self.users.append(inst)
-        self.session_list.append(sessi)
-        s = System()
-        a = s.show_users(sessi)
+    def test_showusers(self):
+        print 'testing System: show_users'
+        global sys
+        admin_logged = [s for s in sys.session_list if s.get_user().get_role()=='admin']
+        normal_logged = [s for s in sys.session_list if s.get_user().get_role()=='normal']
+        a = sys.show_users(admin_logged[0])
         for i in range(0,len(a)):
-            self.assertEqual(str(a[i].get_email()),str(self.users[i].get_email()))
-            self.assertEqual(str(a[i].get_name()),str(self.users[i].get_name()))
-            self.assertEqual(str(a[i].get_role()),str(self.users[i].get_role()))
+            self.assertEqual(str(a[i].get_email()),str(sys.users[i].get_email()))
+            self.assertEqual(str(a[i].get_name()),str(sys.users[i].get_name()))
+            self.assertEqual(str(a[i].get_role()),str(sys.users[i].get_role()))
 
 
 #+END_SRC
@@ -703,10 +702,9 @@ class TestSystem(TestCase):
     def del_user(self,user,session):
         if isinstance(user,User) and isinstance(session,Session):
             if session.get_user().get_role()=='admin' and user.get_role()!='admin' and session.get_user!=user:
-                print 'raju '
-                if user in self.users and session in self.session_list :
+                 if user in self.users and session in self.session_list :
                     self.users.remove(user)
-                else :
+                 else :
                     raise ConstraintError('user not in list or session not present')
             else :
                 raise ConstraintError('only admin can delete and admin cannot be removed')
@@ -719,17 +717,21 @@ class TestSystem(TestCase):
 #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
     def test_deluser(self):
         print 'testing System: del_users'
-        s = System()
-        with self.assertRaises(ConstraintError):
+        global sys
+        admin_logged = [s for s in sys.session_list if s.get_user().get_role()=='admin']
+        normal_logged = [s for s in sys.session_list if s.get_user().get_role()=='normal']
+        with self.assertRaises(ConstraintError): # normal user trying to delete user
             temp2 = {'name': Name('raj'), 'email': Email('raj@gmail.com') , 'role': Role('normal') }
             inst2 = User(temp2)
-            self.users.append(inst2)
-            s.del_user(inst2,sessi1)
-        with self.assertRaises(ConstraintError):
-            temp2 = {'name': Name('raj'), 'email': Email('raj@gmail.com') , 'role': Role('admin') }
-            inst2 = User(temp2)
-            self.users.append(inst2)
-            s.del_user(inst2,sessi)
+            sys.users.append(inst2)
+            sys.del_user(inst2,normal_logged[0])
+        with self.assertRaises(ConstraintError): # you cannot delete an admin
+            temp3 = {'name': Name('raja'), 'email': Email('raja@gmail.com') , 'role': Role('admin') }
+            inst3 = User(temp3)
+            sys.users.append(inst3)
+            sys.del_user(inst3,admin_logged[0])
+        with self.assertRaises(ConstraintError): # cannot delete oneself
+            sys.del_user(admin_logged[0].get_user(),admin_logged[0])
 
 #+END_SRC
 
@@ -753,13 +755,10 @@ class TestSystem(TestCase):
 #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
     def test_getuserbyemail(self):
         print 'testing System: get_user by email'
-        temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
-        inst = User(temp)        
-        sessi = Session(inst)
-        self.users.append(inst)
-        s = System()
-        self.session_list.append(sessi)
-        a = s.getUserByEmail(Email('john@gmail.com'),sessi)
+        global sys
+        admin_logged = [s for s in sys.session_list if s.get_user().get_role()=='admin']
+        normal_logged = [s for s in sys.session_list if s.get_user().get_role()=='normal']
+        a = sys.getUserByEmail(Email('john@gmail.com'),admin_logged[0])
         self.assertEqual(a[0].get_name(),'john')
         self.assertEqual(len(a),1)
         self.assertEqual(a[0].get_email(),'john@gmail.com')
@@ -786,14 +785,11 @@ class TestSystem(TestCase):
 #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
     def test_getemail(self):
         print 'testing System: get_email'
-        temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
-        inst = User(temp)        
-        sessi = Session(inst)
-        self.users.append(inst)
-        self.session_list.append(sessi)
-        s = System()
-        a = s.get_email(inst,sessi)
-        self.assertEqual(a,'john@gmail.com')
+        global sys
+        admin_logged = [s for s in sys.session_list if s.get_user().get_role()=='admin']
+        normal_logged = [s for s in sys.session_list if s.get_user().get_role()=='normal']
+        a = sys.get_email(normal_logged[0].get_user(),admin_logged[0])
+        self.assertEqual(a,'johnsnow@gmail.com')
 
 #+END_SRC
 
@@ -815,16 +811,13 @@ class TestSystem(TestCase):
 
 ***** Test
 #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
-    def test_getemail(self):
+    def test_getname(self):
         print 'testing System: get_email'
-        temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
-        inst = User(temp)        
-        sessi = Session(inst)
-        self.users.append(inst)
-        self.session_list.append(sessi)
-        s = System()
-        a = s.get_email(inst,sessi)
-        self.assertEqual(a,'john')
+        global sys
+        admin_logged = [s for s in sys.session_list if s.get_user().get_role()=='admin']
+        normal_logged = [s for s in sys.session_list if s.get_user().get_role()=='normal']
+        a = sys.get_name(normal_logged[0].get_user(),admin_logged[0])
+        self.assertEqual(a,'johnsnow')
 
 #+END_SRC
 
@@ -848,13 +841,10 @@ class TestSystem(TestCase):
 #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
     def test_getemail(self):
         print 'testing System: get_email'
-        temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
-        inst = User(temp)        
-        sessi = Session(inst)
-        self.users.append(inst)
-        s = System()
-        self.session_list.append(sessi)
-        a = s.get_role(inst,sessi)
+        global sys
+        admin_logged = [s for s in sys.session_list if s.get_user().get_role()=='admin']
+        normal_logged = [s for s in sys.session_list if s.get_user().get_role()=='normal']
+        a = sys.get_role(admin_logged[0].get_user(),admin_logged[0])
         self.assertEqual(a,'admin')
 
 #+END_SRC
@@ -885,23 +875,15 @@ class TestSystem(TestCase):
 #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
     def test_setemail(self):
         print 'testing System: set_email'
-        temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
-        temp1 = {'name': Name('johnsnow'), 'email': Email('johnsnow@gmail.com') , 'role': Role('normal') }
-        inst = User(temp)        
-        sessi = Session(inst)
-        inst1 = User(temp1)
-        sessi1 = Session(inst1)
-        self.users.append(inst)
-        self.session_list.append(sessi)
-        self.users.append(inst1)
-        self.session_list.append(sessi1)
-        s = System()
-        s.set_email(inst1,Email('johnraj@gmail.com'),sessi) # admin changing
-        self.assertEqual(inst1.get_email(),'johnraj@gmail.com')
-        self.assertEqual(System.getUserByEmail(Email('johnraj@gmail.com'),sessi)[0],inst1)
-        s.set_email(inst1,Email('johnsnow@gmail.com'),sessi1) # user changing bakc
-        self.assertEqual(inst1.get_email(),'johnsnow@gmail.com')
-        self.assertEqual(System.getUserByEmail(Email('johnsnow@gmail.com'),sessi)[0],inst1)
+        global sys
+        admin_logged = [s for s in sys.session_list if s.get_user().get_role()=='admin']
+        normal_logged = [s for s in sys.session_list if s.get_user().get_role()=='normal']
+        sys.set_email(normal_logged[0].get_user(),Email('johnraj@gmail.com'),admin_logged[0]) # admin changing
+        self.assertEqual(normal_logged[0].get_user().get_email(),'johnraj@gmail.com')
+        self.assertEqual(sys.getUserByEmail(Email('johnraj@gmail.com'),admin_logged[0])[0],normal_logged[0].get_user())
+        sys.set_email(normal_logged[0].get_user(),Email('johnsnow@gmail.com'),admin_logged[0]) # user changing bakc
+        self.assertEqual(normal_logged[0].get_user().get_email(),'johnsnow@gmail.com')
+        self.assertEqual(sys.getUserByEmail(Email('johnsnow@gmail.com'),admin_logged[0])[0],normal_logged[0].get_user())
 
 
 #+END_SRC
@@ -930,23 +912,15 @@ class TestSystem(TestCase):
 
 ***** Test
 #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
-    def test_setemail(self):
+    def test_setname(self):
         print 'testing System: set_name'
-        temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
-        temp1 = {'name': Name('johnsnow'), 'email': Email('johnsnow@gmail.com') , 'role': Role('normal') }
-        inst = User(temp)        
-        sessi = Session(inst)
-        inst1 = User(temp1)
-        sessi1 = Session(inst1)
-        self.users.append(inst)
-        self.session_list.append(sessi)
-        self.users.append(inst1)
-        self.session_list.append(sessi1)
-        s = System()
-        s.set_name(inst1,Name('johnraj'),sessi) # admin changing
-        self.assertEqual(inst1.get_name(),'johnraj')
-        s.set_name(inst1,Name('johnsnow'),sessi1) # user changing bakc
-        self.assertEqual(inst1.get_name(),'johnsnow')
+        global sys
+        admin_logged = [s for s in sys.session_list if s.get_user().get_role()=='admin']
+        normal_logged = [s for s in sys.session_list if s.get_user().get_role()=='normal']
+        sys.set_name(normal_logged[0].get_user(),Name('johnraj'),admin_logged[0]) # admin changing
+        self.assertEqual(normal_logged[0].get_user().get_name(),'johnraj')
+        sys.set_name(normal_logged[0].get_user(),Name('johnsnow'),normal_logged[0]) # user changing bakc
+        self.assertEqual(normal_logged[0].get_user().get_name(),'johnsnow')
 
 #+END_SRC
 
@@ -973,24 +947,16 @@ class TestSystem(TestCase):
 #+BEGIN_SRC python :tangle ../../tests/test_obj.py :eval no
     def test_showsessions(self):
         print 'testing System: show session'
-        temp = {'name': Name('john'), 'email': Email('john@gmail.com') , 'role': Role('admin') }
-        temp1 = {'name': Name('johnsnow'), 'email': Email('johnsnow@gmail.com') , 'role': Role('normal') }
-        inst = User(temp)        
-        sessi = Session(inst)
-        inst1 = User(temp1)
-        sessi1 = Session(inst1)
-        self.users.append(inst)
-        self.session_list.append(sessi)
-        self.users.append(inst1)
-        self.session_list.append(sessi1)
-        s = System()
+        global sys
+        admin_logged = [s for s in sys.session_list if s.get_user().get_role()=='admin']
+        normal_logged = [s for s in sys.session_list if s.get_user().get_role()=='normal']
         with self.assertRaises(ConstraintError):
-            a = s.showSessions(sessi1)
-        b = s.showSessions(sessi)
+            a = sys.showSessions(normal_logged[0])
+        b = sys.showSessions(admin_logged[0])
         for i in range(0,len(b)):
-            self.assertEqual(str(b[i].get_user().get_email()),str(self.session_list[i].get_user().get_email()))
-            self.assertEqual(str(b[i].get_user().get_name()),str(self.session_list[i].get_user().get_name()))
-            self.assertEqual(str(b[i].get_user().get_role()),str(self.session_list[i].get_user().get_role()))
+            self.assertEqual(str(b[i].get_user().get_email()),str(sys.session_list[i].get_user().get_email()))
+            self.assertEqual(str(b[i].get_user().get_name()),str(sys.session_list[i].get_user().get_name()))
+            self.assertEqual(str(b[i].get_user().get_role()),str(sys.session_list[i].get_user().get_role()))
 
 #+END_SRC
 
