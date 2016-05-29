@@ -26,7 +26,7 @@ from urlparse import urlparse
 from datetime import datetime
 import json
 
-from op_exceptions import AttributeRequired
+from op_exceptions import AttributeRequired,ConstraintError
 from utils import *
 
 
@@ -81,6 +81,7 @@ from datetime import datetime
 from src.db import *
 from src.app import create_app
 from src.op_exceptions import AttributeRequired
+from src.op_exceptions import ConstraintError
 
 config = {
     'SQLALCHEMY_DATABASE_URI': ''
@@ -467,6 +468,14 @@ class TestUser(TestCase):
             self.role = role
 #+END_SRC
 
+**** getRole
+#+BEGIN_SRC python :tangle ../../src/db.py :eval no
+    def get_role(self):
+        return self.role
+#+END_SRC
+
+
+
 
 **** getEmail
  #+BEGIN_SRC python :tangle ../../src/db.py :eval no
@@ -562,7 +571,7 @@ class TestUser(TestCase):
 
 
 ** Role
-
+   
 *** Introduction
    A Role has got certain privileges.  In this current application, the
    privileges are understood 
@@ -837,6 +846,7 @@ class TestSession(TestCase):
         db.drop_all()
 
     def test_session_creation(self):
+        print "session creation testing"
         role = Role(name=Name('admin'))
         role.save()
         user = User(name = Name('johns'),email = Email('johnsn@gmail.com'), role = Role.get_by_id(1));
@@ -853,6 +863,116 @@ class TestSession(TestCase):
     def get_user(self):
         return self.user
 #+END_SRC
+
+
+** System
+
+*** Introduction
+    
+    System class has all the system functions like get user, set user
+    delete user.
+
+    
+*** Mutable Data
+
+     These are the data associated with Role type, which are mutable
+     
+
+     
+*** Definition
+#+BEGIN_SRC python :tangle ../../src/db.py :eval no
+class System():
+    users = []
+    session_list = []
+#+END_SRC
+
+*** Constructor
+
+*** Test Constructor
+#+BEGIN_SRC python :tangle ../../tests/test_db.py :eval no
+sys = System()
+class TestSystem(TestCase):
+    TESTING = True
+
+    def create_app(self):
+        app = create_app(config)
+        return app
+
+    def setUp(self):
+        db.create_all()
+        ar = Role(name = Name('admin'))
+        ur = Role(name = Name('user'))
+        ar.save()
+        ur.save()
+        user1 = User(name= Name('john'), email= Email('john@gmail.com') , role= Role.get_by_id(1) )
+        user2 = User(name= Name('johnsnow'), email = Email('johnsnow@gmail.com') , role =Role.get_by_id(2) )
+        user1.save()
+        user2.save()
+        sessi = Session(user1)
+        sessi1 = Session(user2)
+        global sys
+        sys.users.append(user1)
+        sys.session_list.append(sessi)
+        sys.users.append(user2)
+        sys.session_list.append(sessi1)
+
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
+
+
+#+END_SRC
+
+
+*** Functions
+
+**** adduser
+***** Implementation
+#+BEGIN_SRC python :tangle ../../src/db.py :eval no
+  
+    def add_user(self,user,session):
+        if isinstance(user,User) and isinstance(session,Session):
+            if session.get_user().get_role()==Role.get_by_id(1) and session in self.session_list:
+                if user.get_email() not in [self.users[i].get_email() for i in range(0,len(self.users))]:
+                    self.users.append(user)
+                    return True
+                else :
+                    raise ConstraintError ('User already exists')
+                    return False
+            else :
+                raise ConstraintError ('User must be admin and logged to add a new user')
+                return False
+        else:
+            raise ConstraintError ('instances of user and session must be passed')            
+            return False
+
+#+END_SRC
+
+***** Test
+#+BEGIN_SRC python :tangle ../../tests/test_db.py :eval no
+    def test_adduser(self):
+        print 'testing System: adduser'
+        global sys
+        admin_logged = [s for s in sys.session_list if s.get_user().get_role()==Role.get_by_id(1)]
+        normal_logged = [s for s in sys.session_list if s.get_user().get_role()==Role.get_by_id(2)]
+        list_t = User.get_all()
+#        for i in range(0,len(list_t)):
+#            print list_t[i].email
+        with self.assertRaises(ConstraintError): # trying to add same user
+            sys.add_user(normal_logged[0].get_user(),admin_logged[0])
+        with self.assertRaises(ConstraintError): # normal uesr trying to add user
+            user2  = User(name= Name('raj'), email= Email('raj@gmail.com') , role = Role.get_by_id(1))
+            user2.save();
+            sys.add_user(user2,normal_logged[0])
+        with self.assertRaises(ConstraintError): # proper instances not passed
+            user2 = User(name= Name('rajman'), email= Email('rajman@gmail.com') , role = Role.get_by_id(2))
+            user2.save()
+            sys.add_user(admin_logged[0],user2)
+
+        
+#+END_SRC
+
 
 
 * Run Test Cases
