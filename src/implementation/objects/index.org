@@ -37,18 +37,6 @@ from src.op_exceptions import ConstraintError
 
 ** Imports for utility functions
 
-#+BEGIN_SRC python :tangle ../../src/utils.py :eval no
-
-# module to hold all utilities/helper functions
-
-import json
-
-import re
-
-
-#+END_SRC
-
-
 ** Init Files
 #+BEGIN_SRC python :tangle ../../src/__init__.py :eval no
 import obj
@@ -101,35 +89,11 @@ class ConstraintError(Exception):
     This function take an argument and checks whether the argument contains
     only alphabets.
 
-#+BEGIN_SRC  python :tangle ../../src/utils.py :eval no
-def is_alphabetic_string(value):
-    if re.search('[^a-zA-Z. ]+', value):
-        return False
-    else:
-        return True
-#+END_SRC
-
-
 *** is_email(value)
     Email is a type as defined in RFC [[https://tools.ietf.org/html/rfc5321][5321]], [[https://tools.ietf.org/html/rfc5322][5322]] and [[https://tools.ietf.org/html/rfc6531][6531]].
     Following is the constructor for this class.
 
-#+BEGIN_SRC python :tangle ../../src/utils.py :eval no
-def is_email(value):
-    if re.search('[^@]+@[^@]+\.[^@]+', value):
-        return True
-    else:
-        return False
-#+END_SRC
-
 *** is_role(value):
-#+BEGIN_SRC python :tangle ../../src/utils.py :eval no
-def is_role(value):
-    if value == "admin" or value == "normal":
-        return True
-    else :
-        return False
-#+END_SRC
         
 
 ** Name
@@ -701,7 +665,7 @@ class TestSystem(TestCase):
 
     def del_user(self,user,session):
         if isinstance(user,User) and isinstance(session,Session):
-            if session.get_user().get_role()=='admin' and user.get_role()!='admin' and session.get_user!=user:
+            if session.get_user().get_role()=='admin' and user.get_role()!='admin' and session.get_user()!=user:
                  if user in self.users and session in self.session_list :
                     self.users.remove(user)
                  else :

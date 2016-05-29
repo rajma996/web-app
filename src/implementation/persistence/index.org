@@ -373,7 +373,8 @@ class User(Entity):
 
 
 **** Test the constructor
- #+BEGIN_SRC python :tangle ../../tests/test_db.py :eval no
+
+#+BEGIN_SRC python :tangle ../../tests/test_db.py :eval no
 class TestUser(TestCase):
     TESTING = True
 
@@ -776,6 +777,82 @@ class TestRole(TestCase):
 #+END_SRC
 
 
+
+
+** Session
+
+*** Introduction
+    Session is used to maintain the login status of the user.
+
+*** Immutable Data
+     This is the data associated with Institute type, which is immutable.
+
+     + user
+
+
+*** Mutable Data
+
+     These are the data associated with User type, which are mutable
+
+     + 
+
+
+*** Definition
+#+BEGIN_SRC python :tangle ../../src/db.py :eval no
+class Session():
+    user = None
+#+END_SRC
+
+
+*** Constructor
+
+    The signature of Role is defined as follows
+    #+BEGIN_EXAMPLE
+    session_instance = session(user)
+    #+END_EXAMPLE
+
+#+BEGIN_SRC python :tangle ../../src/db.py :eval no
+    def __init__(self, user):
+        if not isinstance(user,User):
+            raise AttributeRequired("user instance not passed")
+        else :
+            self.user = user;
+#+END_SRC
+
+
+*** Test Constructor
+#+BEGIN_SRC python :tangle ../../tests/test_db.py :eval no
+class TestSession(TestCase):
+    TESTING = True
+
+    def create_app(self):
+        app = create_app(config)
+        return app
+
+    def setUp(self):
+        db.create_all()
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
+
+    def test_session_creation(self):
+        role = Role(name=Name('admin'))
+        role.save()
+        user = User(name = Name('johns'),email = Email('johnsn@gmail.com'), role = Role.get_by_id(1));
+        user.save()
+        sess = Session(user);
+        self.assertEqual(sess.get_user(),user);
+#+END_SRC
+
+*** Functions
+
+**** get_user
+***** Implementation
+#+BEGIN_SRC python :tangle ../../src/db.py :eval no
+    def get_user(self):
+        return self.user
+#+END_SRC
 
 
 * Run Test Cases
