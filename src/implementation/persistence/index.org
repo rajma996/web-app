@@ -867,6 +867,7 @@ class TestSession(TestCase):
         self.assertEqual(sess.get_user(),user);
 #+END_SRC
 
+
 *** Functions
 
 **** get_user
@@ -907,8 +908,11 @@ class System():
 
 *** Test Constructor
 #+BEGIN_SRC python :tangle ../../tests/test_db.py :eval no
-sys = System()
+
 class TestSystem(TestCase):
+    
+    from src.db import sys
+
     TESTING = True
 
     def create_app(self):
@@ -993,6 +997,19 @@ class TestSystem(TestCase):
 #+END_SRC
 
 
+**** add_users_client
+***** Implementation
+#+BEGIN_SRC python :tangle ../../src/db.py :eval no
+  
+    def add_users_client(self,user,mail_id):
+        logged_in_list = [s for s in self.session_list if s.get_user().get_email()==mail_id]
+        if len(logged_in_list)==0:
+            raise ConstraintError('session not present')
+        else :
+            self.add_user(user,logged_in_list[0])
+#+END_SRC
+
+
 
 **** showUsers
 ***** Implementation
@@ -1024,6 +1041,19 @@ class TestSystem(TestCase):
 
 #+END_SRC
 
+
+
+**** get_users_client
+***** Implementation
+#+BEGIN_SRC python :tangle ../../src/db.py :eval no
+  
+    def get_users_client(self,mail_id):
+        logged_in_list = [s for s in self.session_list if s.get_user().get_email()==mail_id]
+        if len(logged_in_list)==0:
+            raise ConstraintError('session not present')
+        else :
+            return ([i.to_client() for i in self.users])
+#+END_SRC
 
 
 **** deluser
@@ -1064,6 +1094,19 @@ class TestSystem(TestCase):
         with self.assertRaises(ConstraintError): # cannot delete oneself
             sys.del_user(admin_logged[0].get_user(),admin_logged[0])
 
+#+END_SRC
+
+
+**** del_users_client
+***** Implementation
+#+BEGIN_SRC python :tangle ../../src/db.py :eval no
+  
+    def del_users_client(self,record,mail_id):
+        logged_in_list = [s for s in self.session_list if s.get_user().get_email()==mail_id]
+        if len(logged_in_list)==0:
+            raise ConstraintError('session not present')
+        else :
+            self.del_user(record,logged_in_list[0])
 #+END_SRC
 
 
@@ -1223,6 +1266,19 @@ class TestSystem(TestCase):
 #+END_SRC
 
 
+**** set_email_client
+***** Implementation
+#+BEGIN_SRC python :tangle ../../src/db.py :eval no
+  
+    def set_email_client(self,user,new_email,mail_id):
+        logged_in_list = [s for s in self.session_list if s.get_user().get_email()==mail_id]
+        if len(logged_in_list)==0:
+            raise ConstraintError('session not present')
+        else :
+            self.set_email(user,Email(new_mail),logged_in_list[0])
+#+END_SRC
+
+
 **** setName
 ***** Implementation
 #+BEGIN_SRC python :tangle ../../src/db.py :eval no
@@ -1257,6 +1313,19 @@ class TestSystem(TestCase):
         sys.set_name(normal_logged[0].get_user(),Name('johnsnow'),normal_logged[0]) # user changing bakc
         self.assertEqual(normal_logged[0].get_user().get_name(),'johnsnow')
 
+#+END_SRC
+
+
+**** set_name_client
+***** Implementation
+#+BEGIN_SRC python :tangle ../../src/db.py :eval no
+  
+    def set_name_client(self,user,new_name,mail_id):
+        logged_in_list = [s for s in self.session_list if s.get_user().get_email()==mail_id]
+        if len(logged_in_list)==0:
+            raise ConstraintError('session not present')
+        else :
+            self.set_name(user,Name(new_name),logged_in_list[0])
 #+END_SRC
 
 
@@ -1296,6 +1365,10 @@ class TestSystem(TestCase):
 #+END_SRC
 
 
+#+BEGIN_SRC python :tangle ../../src/db.py :eval no
+sys = System()
+#+END_SRC
+
 ** Main
    
 *** Construction
@@ -1317,7 +1390,7 @@ class TestSystem(TestCase):
     
 **** login
 ***** Implementaion
-#+BEGIN_SRC python :tangle ../../src/obj.py :eval no
+#+BEGIN_SRC python :tangle ../../src/db.py :eval no
 def login(user,sys):
     
     if isinstance(user,User) and isinstance(sys,System):
