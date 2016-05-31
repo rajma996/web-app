@@ -903,7 +903,6 @@ class System():
 *** Constructor
 #+BEGIN_SRC python :tangle ../../src/db.py :eval no
     def __init__ (self):
-        self.users = []
         self.session_list = []
 #+END_SRC
 
@@ -933,9 +932,7 @@ class TestSystem(TestCase):
         sessi = Session(user1)
         sessi1 = Session(user2)
         global sys
-        sys.users.append(user1)
         sys.session_list.append(sessi)
-        sys.users.append(user2)
         sys.session_list.append(sessi1)
 
 
@@ -944,7 +941,7 @@ class TestSystem(TestCase):
         db.drop_all()
         global sys
         sys.session_list = []
-        sys.users = []
+
 
 #+END_SRC
 
@@ -958,9 +955,8 @@ class TestSystem(TestCase):
     def add_user(self,user,session):
         if isinstance(user,User) and isinstance(session,Session):
             if session.get_user().get_role()==Role.get_by_id(1) and session in self.session_list:
-                if user.get_email() not in [self.users[i].get_email() for i in range(0,len(self.users))]:
-                    self.users.append(user)
-                    return
+                if user.get_email() not in [User.get_all()[i].get_email() for i in range(0,len(User.get_all()))]:
+                    user.save()
                 else :
                     raise ConstraintError ('User already exists')
                     return False
@@ -1020,7 +1016,7 @@ class TestSystem(TestCase):
     def show_users(self,session):
         if isinstance(session,Session):
             if session in self.session_list :
-                return copy.deepcopy(self.users)
+                return User.get_all()
             else :
                 raise ConstraintError('Session not in session list')
         else:
@@ -1037,9 +1033,11 @@ class TestSystem(TestCase):
         normal_logged = [s for s in sys.session_list if s.get_user().get_role()==Role.get_by_id(2)]
       
         a = sys.show_users(admin_logged[0])
+        print 'rajman'
+        print len(a)
         for i in range(0,len(a)):
-            self.assertEqual(str(a[i].get_email()),str(sys.users[i].get_email()))
-            self.assertEqual(str(a[i].get_name()),str(sys.users[i].get_name()))
+            self.assertEqual(str(a[i].get_email()),str(User.get_all()[i].get_email()))
+            self.assertEqual(str(a[i].get_name()),str(User.get_all()[i].get_name()))
 
 #+END_SRC
 
@@ -1051,11 +1049,14 @@ class TestSystem(TestCase):
   
     def get_users_client(self,mail_id):
         logged_in_list = [s for s in self.session_list if s.get_user().get_email()==mail_id]
-       
-        if len(logged_in_list)==0:
-            raise ConstraintError('session not present')
+        if logged_in_list :
+            user_dict_list = []
+            for user in self.show_users(logged_in_list[0]):
+                user_dict_list.append(user.to_client())
+            return user_dict_list
         else :
-            return ([i.to_client() for i in self.users])
+            raise ConstraintError('user  not logged in')
+
 #+END_SRC
 
 
@@ -1066,8 +1067,8 @@ class TestSystem(TestCase):
     def del_user(self,user,session):
         if isinstance(user,User) and isinstance(session,Session):
             if session.get_user().get_role()==Role.get_by_id(1) and user.get_role()!=Role.get_by_id(1) and session.get_user()!=user:
-                 if user in self.users and session in self.session_list :
-                    self.users.remove(user)
+                 if user in User.get_all() and session in self.session_list :
+                    user.delete()
                  else :
                     raise ConstraintError('user not in list or session not present')
             else :
@@ -1120,7 +1121,7 @@ class TestSystem(TestCase):
     def getUserByEmail(self,email,session):
         if isinstance(session,Session) and isinstance(email,Email):
             if session in self.session_list:
-                return [user for user in self.users if user.get_email()==email.value]
+                return [user for user in User.get_all() if user.get_email()==email.value]
             else :
                 raise ConstraintError('session not valid')
         else:
@@ -1135,6 +1136,8 @@ class TestSystem(TestCase):
         global sys
         admin_logged = [s for s in sys.session_list if s.get_user().get_role()==Role.get_by_id(1)]
         normal_logged = [s for s in sys.session_list if s.get_user().get_role()==Role.get_by_id(2)]
+        print 'raj'
+        print len(admin_logged)
         a = sys.getUserByEmail(Email('john@gmail.com'),admin_logged[0])
         self.assertEqual(a[0].get_name(),'john')
         self.assertEqual(len(a),1)
@@ -1149,8 +1152,8 @@ class TestSystem(TestCase):
 
     def get_email(self,user,session):
         if isinstance(user,User) and isinstance(session,Session):
-            if user in self.users and session in self.session_list:
-                return [u.get_email() for u in self.users if u==user][0]
+            if user in User.get_all() and session in self.session_list:
+                return [u.get_email() for u in User.get_all() if u==user][0]
             else :
                 raise ConstraintError('user doesnot exists or invalid session')
         else:
@@ -1177,8 +1180,8 @@ class TestSystem(TestCase):
  
     def get_name(self,user,session):
         if isinstance(user,User) and isinstance(session,Session):
-            if user in self.users and session in self.session_list:
-                return [u.get_name() for u in self.users if u==user][0]
+            if user in User.get_all() and session in self.session_list:
+                return [u.get_name() for u in User.get_all() if u==user][0]
             else :
                 raise ConstraintError('user doesnot exists or invalid session')
         else:
@@ -1205,8 +1208,8 @@ class TestSystem(TestCase):
 
     def get_role(self,user,session):
         if isinstance(user,User) and isinstance(session,Session):
-            if user in self.users and session in self.session_list:
-                return [u.get_role() for u in self.users if u==user][0]
+            if user in User.get_all() and session in self.session_list:
+                return [u.get_role() for u in User.get_all() if u==user][0]
             else :
                 raise ConstraintError('user doesnot exists or invalid session')
         else:
@@ -1235,12 +1238,9 @@ class TestSystem(TestCase):
         print 'set_email called here'
         if isinstance(user,User) and isinstance(session,Session) and isinstance(email,Email):
             if session.user.get_role()==Role.get_by_id(1) or session.user==user:
-               if user in self.users and session in self.session_list:
-                   for i in range(0,len(self.users)):
-                       if self.users[i] == user:
-                           user.set_email(email)
-                           user.update()
-                           self.users[i] = user
+               if user in User.get_all() and session in self.session_list:
+                   user.set_email(email)
+                   user.update()
                else :
                    raise ConstraintError('user not existing or session expired')
             else :
@@ -1289,12 +1289,9 @@ class TestSystem(TestCase):
     def set_name(self,user,name,session):
         if isinstance(user,User) and isinstance(session,Session) and isinstance(name,Name):
             if session.user.get_role()==Role.get_by_id(1) or session.user==user:
-               if user in self.users and session in self.session_list:
-                   for i in range(0,len(self.users)):
-                       if self.users[i] == user:
-                           user.set_name(name)
-                           user.update()
-                           self.users[i] = user
+               if user in User.get_all() and session in self.session_list:
+                   user.set_name(name)
+                   user.update()
                else :
                    raise ConstraintError('user not existing or session expired')
             else :
@@ -1340,13 +1337,10 @@ class TestSystem(TestCase):
         print 'update_user called here'
         if isinstance(user,User) and isinstance(session,Session) and isinstance(email,Email) and isinstance(name,Name):
             if session.user.get_role()==Role.get_by_id(1) or session.user==user:
-               if user in self.users and session in self.session_list:
-                   for i in range(0,len(self.users)):
-                       if self.users[i] == user:
-                           user.set_email(email)
-                           user.set_name(name)
-                           user.update()
-                           self.users[i] = user
+               if user in User.get_all() and session in self.session_list:
+                   user.set_email(email)
+                   user.set_name(name)
+                   user.update()
                else :
                    raise ConstraintError('user not existing or session expired')
             else :
@@ -1363,8 +1357,9 @@ class TestSystem(TestCase):
 #+BEGIN_SRC python :tangle ../../src/db.py :eval no
   
     def update_user_client(self,user,new_name,new_email,mail_id):
+        print 'update_user_client'
         logged_in_list = [s for s in self.session_list if s.get_user().get_email()==mail_id]
-
+        print len(logged_in_list)
         if len(logged_in_list)==0:
             raise ConstraintError('session not present')
         else :
