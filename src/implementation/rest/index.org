@@ -12,6 +12,7 @@ This document illustrates building of REST API
 
 * REST
 
+
 ** Imports for src
 #+BEGIN_SRC python :tangle ../../src/api.py :eval no
 
@@ -68,22 +69,14 @@ def login():
 
     if request.method == 'POST':
         email = str(request.form['email'])
-        url_for_getting_the_user = "%s/users" % \
-                                   (APP_URL)
-        backend_resp = requests.get(url_for_getting_the_user)
-        user_list = backend_resp.json()
-        if len(backend_resp.text.encode('ascii')) != 2:
-            count = 0
-            for user in range(len(user_list)):
-                if str(email) == str(user_list[user]['email']):
-                    current_app.logger.info("Successfully Logged in")
-                    session['email'] = email
-                    session['role_name'] = str(user_list[user]['role']['name'])
-                    return redirect("/")
-                else:
-                    count = count + 1
-            if count == len(user_list):
-                return render_template("login.html", message="Invalid email id")
+        user_list = User.get_all()
+        for i in range(0,len(user_list)):
+            if str(email) == str(user_list[i].get_email()):
+                current_app.logger.info("Successfully Logged in")
+                session['email'] = email
+                session['role_name'] = str(user_list[i].get_role())
+                return redirect("/")
+        return render_template("login.html", message="Invalid email id")
             
 @api.route('/auth/logout', methods=['GET'])
 def logout_handler():
