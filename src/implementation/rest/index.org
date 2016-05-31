@@ -75,8 +75,6 @@ def login():
         if len(backend_resp.text.encode('ascii')) != 2:
             count = 0
             for user in range(len(user_list)):
-                print len(user_list)
-                print user_list[user]
                 if str(email) == str(user_list[user]['email']):
                     current_app.logger.info("Successfully Logged in")
                     session['email'] = email
@@ -182,9 +180,10 @@ def create_user():
             user = User(name=Name(name),
                         email=Email(email),
                         role=Role.get_by_id(role_id))
-
+            
             user.save()
-            sys.add_user_client(user,email_id)
+            
+            sys.add_users_client(user,request.json['session'])
             return jsonify(user.to_client())
         except Exception, e:
             current_app.logger.error("Error occured while inserting"
@@ -216,13 +215,14 @@ def update_delete_user(id):
         print "Check according to your specification"
 
     record = User.get_by_id(id)
+
     if not record:
         abort(404, 'No %s with id %s' % (user, id))
 
     if request.method == 'DELETE':
 
         try:
-            sys.del_user_client(record,email)
+            sys.del_users_client(record,request.json['session'])
             record.delete()
             return jsonify(id=id, status="success")
         except Exception, e:
@@ -239,8 +239,11 @@ def update_delete_user(id):
             if 'email' in request.json:
                 new_data['email'] = Email(request.json['email'])
 
-            sys.set_name_client(record,request.json['name'],request.json['session'])
-            sys.set_name_client(record,request.json['email'],request.json['session'])
+#            sys.set_name_client(record,request.json['name'],request.json['session'])
+#            sys.set_email_client(record,request.json['email'],request.json['session'])
+
+            sys.update_user_client(record,request.json['name'],request.json['email'],request.json['session'])
+
 
             return jsonify(User.get_by_id(id).to_client())
 
@@ -269,6 +272,8 @@ class TestUser(TestCase):
 
     def tearDown(self):
         db.session.remove()
+        sys.users = []
+        sys.session_list = []
         db.drop_all()
 
     def test_get_all_users(self):
@@ -295,7 +300,9 @@ class TestUser(TestCase):
         response = self.client.get("/users",
                                       data=json.dumps(payload),
                                       headers=headers)
+        
 
+       
         self.assertEqual(response.status_code, 503)
 
         sess = Session(user2)
@@ -347,6 +354,8 @@ class TestUser(TestCase):
 
         login(user1,sys)
 
+        sys.add_users_client(user1,'admin@xyz.com')
+
         user2 = User(name=Name("normal user"),
                      email=Email("normal@xyz.com"),
                      role=role2)
@@ -356,17 +365,20 @@ class TestUser(TestCase):
         sys.add_users_client(user2,'admin@xyz.com')
 
         payload = {'email': 'ttt@kkk.com',
-                   'name': 'nearly normal user',
+                   'name': 'nearly normal',
                    'role_id': 2,
                    'session': 'admin@xyz.com'}
         headers = {'content-type': 'application/json'}
+
         response = self.client.put("/users/2",
                                    data=json.dumps(payload),
                                    headers=headers)
-
+        
+        
         self.assertEqual(response.status_code, 200)
 
     def test_create_new_user(self):
+
         print "test_create_new_user"
         role1 = Role(name=Name("admin"))
         role1.save()
@@ -400,6 +412,7 @@ class TestUser(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_delete_user(self):
+
         print "test_delete_user"
         role1 = Role(name=Name("admin"))
         role1.save()
@@ -411,19 +424,25 @@ class TestUser(TestCase):
                      role=role1)
 
         user1.save()
+
+        login(user1,sys)
+        sys.add_users_client(user1,'admin@xyz.com')
+
+
         user2 = User(name=Name("normal user"),
                      email=Email("normal@xyz.com"),
                      role=role2)
 
         user2.save()
+        sys.add_users_client(user2,'admin@xyz.com')
 
         user3 = User(name=Name("normal userraj"),
                      email=Email("normal2@xyz.com"),
                      role=role2)
 
         user3.save()
+        sys.add_users_client(user3,'admin@xyz.com')
 
-        login(user3,sys)
 
         payload = {'session': 'normal2@xyz.com'}
 
@@ -433,9 +452,7 @@ class TestUser(TestCase):
                                       data=json.dumps(payload),
                                       headers=headers)
 
-        self.assertEqual(response.status_code, 500) # normal user cannot addd a user
-
-        login(user1,sys)
+        self.assertEqual(response.status_code, 500) # normal user cannot delete a user
 
         payload = {'session': 'admin@xyz.com'}
 
@@ -443,7 +460,7 @@ class TestUser(TestCase):
                                       data=json.dumps(payload),
                                       headers=headers)
 
-        self.assertEqual(response.status_code, 200) # admin user can addd a user
+        self.assertEqual(response.status_code, 200) # admin user can delete a user
 #+END_SRC 
 
 

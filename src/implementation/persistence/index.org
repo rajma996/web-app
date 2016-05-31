@@ -559,11 +559,11 @@ class TestUser(TestCase):
                     role=Role(name=Name("admin")))
         user.save()
         u1 = User.get_by_id(1)
-        print u1.to_client()
+
         u1.update(name=Name("Duddley Rod"), 
                   email=Email("duddley@gmail.com"),
                   role=Role(name=Name("owner")))
-        print u1.to_client()
+
         self.assertEqual(u1.get_by_id(1).name, "Duddley Rod")
         self.assertEqual(u1.get_by_id(1).role.name, "owner")
 #+END_SRC
@@ -932,8 +932,6 @@ class TestSystem(TestCase):
         sessi = Session(user1)
         sessi1 = Session(user2)
         global sys
-        sys.session_list = []
-        sys.users = []
         sys.users.append(user1)
         sys.session_list.append(sessi)
         sys.users.append(user2)
@@ -943,7 +941,9 @@ class TestSystem(TestCase):
     def tearDown(self):
         db.session.remove()
         db.drop_all()
-
+        global sys
+        sys.session_list = []
+        sys.users = []
 
 #+END_SRC
 
@@ -959,7 +959,7 @@ class TestSystem(TestCase):
             if session.get_user().get_role()==Role.get_by_id(1) and session in self.session_list:
                 if user.get_email() not in [self.users[i].get_email() for i in range(0,len(self.users))]:
                     self.users.append(user)
-                    return True
+                    return
                 else :
                     raise ConstraintError ('User already exists')
                     return False
@@ -1002,7 +1002,8 @@ class TestSystem(TestCase):
 #+BEGIN_SRC python :tangle ../../src/db.py :eval no
   
     def add_users_client(self,user,mail_id):
-        logged_in_list = [s for s in self.session_list if s.get_user().get_email()==mail_id]
+        logged_in_list = [s for s in self.session_list if s.get_user().get_email()==mail_id]      
+
         if len(logged_in_list)==0:
             raise ConstraintError('session not present')
         else :
@@ -1033,7 +1034,7 @@ class TestSystem(TestCase):
         global sys
         admin_logged = [s for s in sys.session_list if s.get_user().get_role()==Role.get_by_id(1)]
         normal_logged = [s for s in sys.session_list if s.get_user().get_role()==Role.get_by_id(2)]
-        print admin_logged[0]
+      
         a = sys.show_users(admin_logged[0])
         for i in range(0,len(a)):
             self.assertEqual(str(a[i].get_email()),str(sys.users[i].get_email()))
@@ -1049,6 +1050,7 @@ class TestSystem(TestCase):
   
     def get_users_client(self,mail_id):
         logged_in_list = [s for s in self.session_list if s.get_user().get_email()==mail_id]
+       
         if len(logged_in_list)==0:
             raise ConstraintError('session not present')
         else :
@@ -1191,8 +1193,6 @@ class TestSystem(TestCase):
         admin_logged = [s for s in sys.session_list if s.get_user().get_role()==Role.get_by_id(1)]
         normal_logged = [s for s in sys.session_list if s.get_user().get_role()==Role.get_by_id(2)]
         a = sys.get_name(normal_logged[0].get_user(),admin_logged[0])
-        print 'raju'
-        print a
         self.assertEqual(a,'johnsnow')
 
 #+END_SRC
@@ -1231,6 +1231,7 @@ class TestSystem(TestCase):
 #+BEGIN_SRC python :tangle ../../src/db.py :eval no
 
     def set_email(self,user,email,session):
+        print 'set_email called here'
         if isinstance(user,User) and isinstance(session,Session) and isinstance(email,Email):
             if session.user.get_role()==Role.get_by_id(1) or session.user==user:
                if user in self.users and session in self.session_list:
@@ -1272,6 +1273,7 @@ class TestSystem(TestCase):
   
     def set_email_client(self,user,new_email,mail_id):
         logged_in_list = [s for s in self.session_list if s.get_user().get_email()==mail_id]
+        print len(logged_in_list)
         if len(logged_in_list)==0:
             raise ConstraintError('session not present')
         else :
@@ -1326,6 +1328,46 @@ class TestSystem(TestCase):
             raise ConstraintError('session not present')
         else :
             self.set_name(user,Name(new_name),logged_in_list[0])
+#+END_SRC
+
+
+**** update_user
+***** Implementation
+#+BEGIN_SRC python :tangle ../../src/db.py :eval no
+
+    def update_user(self,user,email,name,session):
+        print 'update_user called here'
+        if isinstance(user,User) and isinstance(session,Session) and isinstance(email,Email) and isinstance(name,Name):
+            if session.user.get_role()==Role.get_by_id(1) or session.user==user:
+               if user in self.users and session in self.session_list:
+                   for i in range(0,len(self.users)):
+                       if self.users[i] == user:
+                           user.set_email(email)
+                           user.set_name(name)
+                           user.update()
+                           self.users[i] = user
+               else :
+                   raise ConstraintError('user not existing or session expired')
+            else :
+                raise ConstraintError('Only admin of same user can edit the email')
+        else :
+            raise ConstraintError ('Proper instances of user,email, session not passed')
+
+#+END_SRC
+
+
+
+**** update_user_client
+***** Implementation
+#+BEGIN_SRC python :tangle ../../src/db.py :eval no
+  
+    def update_user_client(self,user,new_name,new_email,mail_id):
+        logged_in_list = [s for s in self.session_list if s.get_user().get_email()==mail_id]
+
+        if len(logged_in_list)==0:
+            raise ConstraintError('session not present')
+        else :
+            self.update_user(user,Email(new_email),Name(new_name),logged_in_list[0])
 #+END_SRC
 
 
