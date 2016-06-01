@@ -68,6 +68,8 @@ def index():
         else:
             return render_template("login.html")
 
+
+#+BEGIN_SRC python :tangle ../../src/api.py :eval no
 @api.route("/auth/login", methods=['GET', 'POST'])
 def login():
 
@@ -78,10 +80,17 @@ def login():
             if str(email) == str(user_list[i].get_email()):
                 current_app.logger.info("Successfully Logged in")
                 session['email'] = email
-                session['role_name'] = str('admin')
+                if user_list[i].get_role() == Role.get_by_id(1) :
+                    session['role_name'] = str('admin')
+                else :
+                    session['role_name'] = str('user')
+
                 return redirect("/")
         return render_template("login.html", message="Invalid email id")
-            
+
+#+END_SRC
+
+#+BEGIN_SRC python :tangle ../../src/api.py :eval no
 @api.route('/auth/logout', methods=['GET'])
 def logout_handler():
     session.pop('email', None)
@@ -94,14 +103,18 @@ def logout_handler():
 #+BEGIN_SRC python :tangle ../../src/api.py :eval no
 @api.route('/users', methods=['GET'])
 def get_users():
-
-    if 'session' in request.json:
+    email =  request.headers.get('session')
+    if sys.login_client(email) :
         try:
+            print 'trying to get all users'
             result = sys.get_users_client(request.json['session'])
+            print 'result'
         except:
             abort(503,'not logged in')
         else :
             return jsonify_list(result)
+
+
 #+END_SRC
    
 

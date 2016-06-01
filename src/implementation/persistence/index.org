@@ -1408,6 +1408,19 @@ sys = System()
 #+END_SRC
 
 
+
+**** login_client
+***** Implementation
+#+BEGIN_SRC python :tangle ../../src/db.py :eval no
+  
+    def login_client(self,mail_id):
+        if mail_id in [i.get_user().get_email() for i in self.session_list]:
+            raise ConstraintError('session not present')
+        else :
+            self.set_name(user,Name(new_name),logged_in_list[0])
+#+END_SRC
+
+
 ** Main
    
 *** Construction
