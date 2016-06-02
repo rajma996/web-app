@@ -93,8 +93,23 @@ app.controller("edit-user", function($scope,  $http, $routeParams, $route,$windo
       {
          $scope.users = response;
          console.log(response)
-         history.back()
-         history.back()
+
+         if (typeof response['error'] !== 'undefined')
+         {
+            $scope.status = response['error']
+         }
+         else if (typeof response['success'] !== 'undefined')
+         {
+           $scope.status = response['success'];
+           history.back()
+           history.back()
+         }
+         else
+         {
+           history.back()
+           history.back()
+         }
+
       });
 
     };

@@ -1,0 +1,29 @@
+#+TITLE: Data Model for the Mini Version User Directory Application
+#+AUTHOR: Raj Manvar
+#+DATE: [2016-06-02 Fri]
+#+PROPERTY: results output
+#+PROPERTY: exports code
+#+SETUPFILE: ../org-templates/level-1.org
+#+options: ^:nil
+#+LATEX: Literal LaTeX code for export
+
+
+* Object Model
+  
+  Here we decide the database model (table and the relations ) for the application
+
+** Table
+
+   We have two table in the database : User and Role
+
+*** Role table:
+
+    We have two roles admin and user. So this table has two entries : one for
+    admin and one for user and not changed throughout.
+
+*** User table
+
+    This table maintains one entry per user in the database. It has name,
+    email id and a reference to the corresponding entry to the role table
+    corresponding if the user is admin or a normal user.
+

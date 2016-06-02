@@ -1,0 +1,54 @@
+#+TITLE: Data Model for the Mini Version User Directory Application
+#+AUTHOR: Raj Manvar
+#+DATE: [2016-06-02 Fri]
+#+PROPERTY: results output
+#+PROPERTY: exports code
+#+SETUPFILE: ../org-templates/level-1.org
+#+options: ^:nil
+#+LATEX: Literal LaTeX code for export
+
+
+* API
+  
+  APIs are the interface between the front end and the application.
+  Each API has a specific format which it should follow to get the desired output.
+  Here is the list of rest APIs exposed by the application.
+  
+** List of APIs
+
+|----------------+-------------------------+-------------+------------------------------+-----------------|
+| Api            | Url                     | Http Method | Headers and payload          | Result          |
+| Usage          |                         |             | required                     |                 |
+|----------------+-------------------------+-------------+------------------------------+-----------------|
+| login          | 10.4.15.223/auth/login  | post        | payload: email-id            | logs in user    |
+|                |                         |             | header :                     | and redirects   |
+|                |                         |             |                              | to list users   |
+|----------------+-------------------------+-------------+------------------------------+-----------------|
+| logout         | 10.4.15.223/auth/logout | get         | header: email-id             | logs out the    |
+|                |                         |             | payload : NA                 | user            |
+|----------------+-------------------------+-------------+------------------------------+-----------------|
+| get_users      | 10.4.15.223/users       | get         | header : email-id            | returns list    |
+|                |                         |             | payload : NA                 | of all users    |
+|----------------+-------------------------+-------------+------------------------------+-----------------|
+| get_user_by_id | 10.4.15.223/users/id    | get         | header:email-id              | returns user    |
+|                |                         |             | payload: NA                  | info of id      |
+|----------------+-------------------------+-------------+------------------------------+-----------------|
+| get_role_by_id | 10.4.15.223/roles/id    | get         | header: email-id             | returns role    |
+|                |                         |             | payload : NA                 | of user         |
+|----------------+-------------------------+-------------+------------------------------+-----------------|
+| create_user    | 10.4.15.223/users       | post        | header: email-id             | add the user    |
+|                |                         |             | payload: name,email,role     | to the database |
+|                |                         |             |                              |                 |
+|----------------+-------------------------+-------------+------------------------------+-----------------|
+| update_user    | 10.4.15.223/users/id    | put         | header: email-id             | user of id      |
+|                |                         |             | payload: new name, new email | updated         |
+|----------------+-------------------------+-------------+------------------------------+-----------------|
+| delete_user    | 10.4.15.223/users/id    | delete      | header: email-id             | user of id      |
+|                |                         |             | payload:                     | deleted         |
+|                |                         |             |                              |                 |
+|                |                         |             |                              |                 |
+|----------------+-------------------------+-------------+------------------------------+-----------------|
+
+* Deployment
+
+** The web-app is deployed on ip 10.4.15.223 on VLEAD LDAP server on apache server and has maximum users limit of 25

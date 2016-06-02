@@ -382,14 +382,14 @@ class System():
 
     def set_name(self,user,name,session):
         if isinstance(user,User) and isinstance(session,Session) and isinstance(name,Name):
-            if session.user.get_role()==Role.get_by_id(1) or session.user==user:
+            if session.user.get_role().name=='admin' or session.user==user:
                if user in User.get_all() and session in self.session_list:
                    user.set_name(name)
                    user.update()
                else :
                    raise ConstraintError('user not existing or session expired')
             else :
-                raise ConstraintError('Only admin of same user can edit the email')
+                raise ConstraintError('Only admin of same user can edit the name')
         else :
             raise ConstraintError ('Proper instances of user,email, session not passed')
 
@@ -400,6 +400,9 @@ class System():
             raise ConstraintError('session not present')
         else :
             self.set_name(user,Name(new_name),logged_in_list[0])
+
+
+
 
     def update_user(self,user,email,name,session):
         print 'update_user called here'

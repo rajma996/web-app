@@ -160,16 +160,25 @@ def update_delete_user(id):
 
         new_data = {}
         try:
+
+            print request.json['name']
+            print request.json['email']
+
             if 'name' in request.json:
                 new_data['name'] = Name(request.json['name'])
             if 'email' in request.json:
                 new_data['email'] = Email(request.json['email'])
 
-            sys.update_user_client(record,request.json['name'],request.json['email'],request.json['session'])
+            if record.get_email() == request.json['email']:
+                sys.set_name_client(record,request.json['name'],request.json['session'])
+            else :
+                sys.update_user_client(record,request.json['name'],request.json['email'],request.json['session'])
 
-            return jsonify(User.get_by_id(id).to_client())
+            return jsonify ({'success' : 'operation successfull'})
+
 
         except ConstraintError as erro:
+            print erro.str
             return jsonify({'error' : erro.str})
         except Exception, e:
             current_app.logger.error("Error occured while updating"

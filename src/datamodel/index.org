@@ -6,6 +6,7 @@
 #+SETUPFILE: ../org-templates/level-1.org
 #+options: ^:nil
 #+LATEX: Literal LaTeX code for export
+
 * Notation
 ** Sets, cardinality and relations
 
@@ -76,12 +77,21 @@ Encodes the following items of information:
 * Abstract Entity Types
 #+BEGIN_SRC spec :tangle spec.txt
 User
+Name
+Email
+Session
+Role
 #+END_SRC
 
 * Relations and cardinality constraints over entity types 
 For each relation, we define its inverse next to it.
 #+BEGIN_SRC spec :tangle spec.txt
 [email, user]  :  User?    > Email!
+[name, user]   :  User     > Name!
+[user, session]:  Session  > User!
+[role,  user]:     User     >Role!
+[session, user]:  User!    >Session
+
 #+END_SRC
 
 ** Keys
@@ -111,12 +121,19 @@ state variables.
 
  #+BEGIN_SRC spec
  user-set    : set[User]    ; set of users in the system
+ session-set : set[Session] ; set of sessions in the system
  #+END_SRC
 
 and five relations
 
  #+BEGIN_SRC spec
+  
  email:      User > Email!
+ name :      User > Name!
+ role:       User > Role!
+ user:       Session > User!
+ session:    User! > Session
+ 
  #+END_SRC
 
 *** Applying relations to sets
@@ -136,12 +153,19 @@ and five relations
 ** Derived Entity sets
  #+BEGIN_SRC spec :tangle spec.txt
  email-set   : set[Email]   = user-set.email        ; set of emails in the system
+ name-set    : set[Name]    = user-set.name         ; set of names in the system
+ role-set    : set[Role]    = user-set.role         ; set of all roles of all users
+ logged-in-user-set : set[User]   = session-set.user   
+ logged-in-role-set :  set[Role]  = session-set.user.role
  #+END_SRC
 
 ** Referential Integrity Constraints over entity-sets
 These specifications also capture referential integrity.
 #+BEGIN_SRC spec :tangle spec.txt
 [email, user]    :  user-set!    > email-set!
+[name, users]    :  user-set+    > name-set!    
+[role, users]    :  user-set+    > role-set!   
+[role, session]  :  session-set  >  role-set!
 #+END_SRC
 
 * Operations 
@@ -157,12 +181,44 @@ actor performing the operation.
  - U  update a user      
  - D  delete a user      
 
+  
 ** Actor
 Operations are performed by Actors.  Our application has two
 types of actors:  =system= and =session=. 
 
-|----------------------------------------+------------------------+----------------+-------------------|
-| Operation                              | Actor                  | Ref.           | Result            |
-|                                        | Credentials            | Integrity      |                   |
-|----------------------------------------+------------------------+----------------+-------------------|
-
+|------------------------------------------+----------------------+-------------------+----------------------+---|
+| Operation                                | Actor                | Ref.              | Result               |   |
+|                                          | Credentials          | Integrity         |                      |   |
+|------------------------------------------+----------------------+-------------------+----------------------+---|
+| viewUsers(s:Session)                     |                      | s:session-set     | success              |   |
+|------------------------------------------+----------------------+-------------------+----------------------+---|
+| createUser(e: Email, n:Name, s: Session) | s.user.role=admin    | s:session-set     | user created         |   |
+|                                          |                      | e:user-set.email  |                      |   |
+|------------------------------------------+----------------------+-------------------+----------------------+---|
+| deleteUsers( u:User, s:Session)          | s.user.role=admin    | u:user-set        |                      |   |
+|                                          | u.role!=admin        | s:session-set     | user-set decreases   |   |
+|                                          | s.user!=user         | u:~session.users  |                      |   |
+|------------------------------------------+----------------------+-------------------+----------------------+---|
+| getEmail(u: User, s:Session)             |                      | u:user-set        | email returned       |   |
+|                                          |                      | s:session-set     |                      |   |
+|------------------------------------------+----------------------+-------------------+----------------------+---|
+| getName(u: User,  s:Session)             |                      | s:session-set     | name returned        |   |
+|                                          |                      | u:user-set        |                      |   |
+|------------------------------------------+----------------------+-------------------+----------------------+---|
+| getRole(u: User, s:Session)              |                      | s:session-set     | role returned        |   |
+|                                          |                      | u:user-set        |                      |   |
+|------------------------------------------+----------------------+-------------------+----------------------+---|
+| editEmail(u: User, e:Email, s:Session)   | s.user.role=admin or | u:user-set        | user updted          |   |
+|                                          | s.user=u             | s:session-set     |                      |   |
+|                                          |                      | e:~user-set.email |                      |   |
+|------------------------------------------+----------------------+-------------------+----------------------+---|
+| logOut( s:System, s:session)             |                      | s: session-set    | session removed from |   |
+|                                          |                      |                   | session set          |   |
+|------------------------------------------+----------------------+-------------------+----------------------+---|
+| editName(n:Name, s: Session, u: User)    | s.user.role=admin or | u: User-set       |                      |   |
+|                                          | s.user=u             | s: Session-set    | success              |   |
+|                                          |                      |                   | user-set updated     |   |
+|------------------------------------------+----------------------+-------------------+----------------------+---|
+| login(s:system , e:email)                |                      | e:user-set.email  | new session created  |   |
+|------------------------------------------+----------------------+-------------------+----------------------+---|
+|                                          |                      |                   |                      |   |

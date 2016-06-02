@@ -1,0 +1,48 @@
+#+TITLE: Data Model for the Mini Version User Directory Application
+#+AUTHOR: Raj Manvar
+#+DATE: [2016-06-02 Fri]
+#+PROPERTY: results output
+#+PROPERTY: exports code
+#+SETUPFILE: ../org-templates/level-1.org
+#+options: ^:nil
+#+LATEX: Literal LaTeX code for export
+
+
+* Object Model
+  
+  Here we decide the objects or the entities to be used by our web application
+
+** Class
+
+   Following is a brief description of the classes used in the application
+
+*** Name
+
+    For the name of each user. Stores a value which is a valid name .
+
+*** Email
+
+    For the email of each user. Stores a value which is a valid email.
+
+*** Role
+
+    For the role of each user. Stores a valid admin name (admin or user).
+
+*** User
+
+    Each user in the system will be an instance of this class. This class has
+    three instance of name, email and the role class. 
+
+*** Session
+
+    This class is for maintaining the list of logged in user. It has entity of
+    the user class which represents the user a session belongs to
+
+*** System
+
+    + This is the class containing most of the system operations. 
+    + It exposes all the methods for changing the state of the system 
+      (defined by the user and session list) .
+    + It also validates the state of the system and takes care that
+      the current system state is valid and meets the requirements as in the
+      data model.
