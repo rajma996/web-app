@@ -1,0 +1,10 @@
+
+User
+
+[email, user]  :  User?    > Email!
+
+Role = user + admin
+
+ email-set   : set[Email]   = user-set.email        ; set of emails in the system
+
+[email, user]    :  user-set!    > email-set!

@@ -4,7 +4,6 @@
 \#*\#
 .\#*\#
 logs/
-build/
 elisp/
 org-templates/
 style/
